@@ -26,25 +26,30 @@ export type Permission =
   | 'issue.create'
   | 'issue.update'
   | 'measurement.record'
-  | 'ees.record';
+  | 'ees.record'
+  | 'icra.manage'
+  | 'icra.log'
+  | 'icra.approve'
+  | 'ilsm.manage'
+  | 'firewatch.log';
 
 /**
  * Role → permission matrix. AHJ / Inspector is read-and-sign only.
  * Clinical reps and infection prevention can raise issues but not execute tests in the MVP.
  */
 export const PERMISSIONS: Record<Role, Permission[]> = {
-  owner: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.sign', 'issue.create', 'issue.update'],
-  cxa: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'measurement.record', 'ees.record'],
-  gc: ['read', 'test.execute', 'test.sign', 'issue.create', 'issue.update'],
-  trade: ['read', 'test.execute', 'test.sign', 'issue.update'],
-  infection_prevention: ['read', 'issue.create', 'issue.update', 'test.sign'],
-  safety_officer: ['read', 'issue.create', 'issue.update', 'test.sign'],
+  owner: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.sign', 'issue.create', 'issue.update', 'ilsm.manage'],
+  cxa: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'measurement.record', 'ees.record', 'icra.manage', 'icra.log', 'ilsm.manage', 'firewatch.log'],
+  gc: ['read', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'icra.manage', 'icra.log', 'firewatch.log'],
+  trade: ['read', 'test.execute', 'test.sign', 'issue.update', 'icra.log', 'firewatch.log'],
+  infection_prevention: ['read', 'issue.create', 'issue.update', 'test.sign', 'icra.manage', 'icra.log', 'icra.approve'],
+  safety_officer: ['read', 'issue.create', 'issue.update', 'test.sign', 'ilsm.manage', 'firewatch.log'],
   clinical_rep: ['read', 'issue.create'],
   medgas_verifier: ['read', 'test.execute', 'test.sign', 'issue.create'],
   tab: ['read', 'measurement.record', 'test.execute', 'test.sign', 'issue.update'],
   ahj: ['read', 'test.sign'],
   design_engineer: ['read', 'issue.create', 'issue.update'],
-  facilities_ops: ['read', 'issue.create', 'ees.record', 'test.execute', 'test.sign'],
+  facilities_ops: ['read', 'issue.create', 'ees.record', 'test.execute', 'test.sign', 'firewatch.log'],
 };
 
 /** Signature meanings each role may apply. */

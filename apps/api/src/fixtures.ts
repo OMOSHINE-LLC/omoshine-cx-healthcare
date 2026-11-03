@@ -5,7 +5,7 @@ import { hashPin } from './crypto.js';
 export interface SeededTenant {
   tenantId: string;
   orgs: Record<'owner' | 'cxa' | 'gc' | 'tab' | 'ahj' | 'elec', string>;
-  users: Record<'admin' | 'cxa' | 'gc' | 'tab' | 'ahj' | 'clinical' | 'outsider', { id: string; email: string }>;
+  users: Record<'admin' | 'cxa' | 'gc' | 'tab' | 'ahj' | 'clinical' | 'ip' | 'safety' | 'outsider', { id: string; email: string }>;
   pin: string;
 }
 
@@ -44,6 +44,8 @@ export async function seedTenant(adminUrl: string, label = randomUUID().slice(0,
       tab: await user('tab', 'Riley TAB', orgs.tab),
       ahj: await user('ahj', 'Morgan Inspector', orgs.ahj),
       clinical: await user('clinical', 'Casey Charge Nurse', orgs.owner),
+      ip: await user('ip', 'Robin Infection Prevention', orgs.owner),
+      safety: await user('safety', 'Sam Safety Officer', orgs.owner),
       outsider: await user('outsider', 'Pat Unassigned', orgs.gc),
     };
     return { tenantId, orgs, users, pin };

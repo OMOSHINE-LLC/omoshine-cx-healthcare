@@ -8,6 +8,8 @@ import { RoomGridPage, RoomPage } from './pages/RoomCompliance';
 import { EesPage } from './pages/Ees';
 import { IssuesPage } from './pages/Issues';
 import { TestRunPage, TestRunsPage } from './pages/TestRuns';
+import { IcraPage } from './pages/Icra';
+import { IlsmPage } from './pages/Ilsm';
 
 function ProjectNav() {
   const { projectId } = useParams();
@@ -20,6 +22,8 @@ function ProjectNav() {
       <NavLink to={`${base}/rooms`}>Room compliance</NavLink>
       <NavLink to={`${base}/ees`}>Essential electrical</NavLink>
       <NavLink to={`${base}/tests`}>Checklists and tests</NavLink>
+      <NavLink to={`${base}/icra`}>Infection control (ICRA)</NavLink>
+      <NavLink to={`${base}/ilsm`}>Interim life safety</NavLink>
       <NavLink to={`${base}/issues`}>Issues</NavLink>
     </nav>
   );
@@ -48,6 +52,8 @@ function Shell({ onLogout }: { onLogout: () => void }) {
                 <Route path="tests" element={<TestRunsPage />} />
                 <Route path="tests/:runId" element={<TestRunPage />} />
                 <Route path="issues" element={<IssuesPage />} />
+                <Route path="icra" element={<IcraPage />} />
+                <Route path="ilsm" element={<IlsmPage />} />
               </Routes>
             </main>
           </div>
