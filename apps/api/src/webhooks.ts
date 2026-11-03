@@ -33,6 +33,8 @@ export const WEBHOOK_EVENTS: Record<string, string> = {
   'turnover.accept': 'turnover.document_accepted',
   'turnover.reject': 'turnover.document_rejected',
   'final_report.issue': 'final_report.issued',
+  'compliance.complete': 'compliance.task_completed',
+  'training.held': 'training.session_held',
 };
 export const EVENT_NAMES = [...new Set(Object.values(WEBHOOK_EVENTS))].sort();
 

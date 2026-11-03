@@ -24,6 +24,7 @@ import { lifeSafetyRoutes } from './routes/lifesafety.js';
 import { activationRoutes } from './routes/activation.js';
 import { ssoRoutes } from './routes/sso.js';
 import { turnoverRoutes } from './routes/turnover.js';
+import { operationsRoutes } from './routes/operations.js';
 import { sha256 } from './crypto.js';
 import { timingSafeEqual } from 'node:crypto';
 
@@ -100,6 +101,7 @@ export async function buildApp(opts: { db: Db; logger?: boolean; fetchImpl?: typ
     await activationRoutes(api, opts.db);
     await ssoRoutes(api, opts.db);
     await turnoverRoutes(api, opts.db);
+    await operationsRoutes(api, opts.db);
   }, { prefix: '/api/v1' });
 
   return app;

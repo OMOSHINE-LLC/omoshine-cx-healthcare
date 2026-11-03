@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api, getToken } from '../api';
+import { api, download, getToken } from '../api';
 import { LifeSafetyFlag, Loading, fmtDate, useApi } from '../components';
 
 interface PointSummary { point: string; label: string; samples: number; min: number; max: number; median: number; pctOfTimeCompliant: number | null; excursions: { from: string; to: string; minutes: number; worst: number }[]; longestExcursionMin: number; dataGaps: unknown[] }
@@ -37,14 +37,6 @@ export function TrendTable({ rooms }: { rooms: TrendRoom[] }) {
   );
 }
 
-async function download(path: string, filename: string) {
-  const res = await fetch(`/api/v1${path}`, { headers: { authorization: `Bearer ${getToken()}` } });
-  if (!res.ok) throw new Error(`Download failed (${res.status})`);
-  const url = URL.createObjectURL(await res.blob());
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 export function DataExchangePage() {
   const { projectId } = useParams();

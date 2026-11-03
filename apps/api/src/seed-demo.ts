@@ -134,6 +134,17 @@ const ab = await call(gc, 'POST', `/systems/${ahu1.id}/turnover-documents`, { ki
 await call(cxa, 'POST', `/turnover-documents/${ab.id}/review`, { decision: 'rejected', note: 'Level 4 duct routing not updated after RFI 112' });
 await call(gc, 'POST', `/systems/${ahu1.id}/turnover-documents`, { kind: 'warranty', title: 'AHU-1 manufacturer warranty', reference: 'Closeout/Mechanical/AHU-1/Warranty.pdf', warrantyStart: new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10), warrantyMonths: 24 });
 
+// Operations: the standard compliance calendar, a passed generator test, a failed ATS test, and one training session held.
+await call(cxa, 'POST', `/projects/${project.id}/compliance/generate`, { startOn: new Date(Date.now() - 20 * 864e5).toISOString().slice(0, 10) });
+const ops = await call(cxa, 'GET', `/projects/${project.id}/compliance`);
+const genTask = ops.tasks.find((x: { kind: string }) => x.kind === 'gen_monthly');
+if (genTask) await call(cxa, 'POST', `/compliance-tasks/${genTask.id}/completions`, { answers: { ran_30_min: true, load_or_exhaust_ok: true, no_alarms: true } });
+const atsTask = ops.tasks.find((x: { kind: string; target_label: string }) => x.kind === 'ats_monthly' && x.target_label === 'ATS-CR-2');
+if (atsTask) await call(safety, 'POST', `/compliance-tasks/${atsTask.id}/completions`, { answers: { transferred: true, within_10s: false }, notes: 'Critical branch restored in 13 seconds; time delay relay suspected' });
+const session = await call(gc, 'POST', `/projects/${project.id}/training-sessions`, { systemId: ahu1.id, topic: 'AHU-1 operation, alarms and filter changes', audiences: ['facilities', 'infection_prevention'], trainer: 'Mechanical contractor', scheduledAt: new Date(Date.now() - 2 * 864e5).toISOString(), durationMin: 90 });
+await call(gc, 'POST', `/training-sessions/${session.id}/attendance`, { attendees: [{ name: 'Facilities technician A', audience: 'facilities' }, { name: 'Facilities technician B', audience: 'facilities' }] });
+await call(gc, 'POST', `/training-sessions/${session.id}/close`, { outcome: 'held', materialsReference: 'Closeout/Training/AHU-1/sign-in.pdf' });
+
 console.log('\nDemo seeded. Sign in at http://localhost:5173 with PIN 2468 as:');
 for (const [k, u] of Object.entries(t.users)) console.log(`  ${k.padEnd(9)} ${u.email}`);
 await app.close();
