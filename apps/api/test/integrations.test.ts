@@ -44,7 +44,7 @@ describe('API keys', () => {
     keyId = k.id;
     const list = expectStatus(await w.as.admin.get('/integration-keys'), 200);
     expect(list[0]).toMatchObject({ id: keyId, name: 'BAS gateway', role: 'tab', revoked_at: null });
-    expect(JSON.stringify(list)).not.toContain(token.split('_')[2]);
+    expect(JSON.stringify(list)).not.toContain(token.slice('omk_'.length + 13));
   });
 
   it('a key acts with its role on its project only, and cannot sign', async () => {

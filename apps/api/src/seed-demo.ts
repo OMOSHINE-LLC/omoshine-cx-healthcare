@@ -145,6 +145,13 @@ const session = await call(gc, 'POST', `/projects/${project.id}/training-session
 await call(gc, 'POST', `/training-sessions/${session.id}/attendance`, { attendees: [{ name: 'Facilities technician A', audience: 'facilities' }, { name: 'Facilities technician B', audience: 'facilities' }] });
 await call(gc, 'POST', `/training-sessions/${session.id}/close`, { outcome: 'held', materialsReference: 'Closeout/Training/AHU-1/sign-in.pdf' });
 
+// Specialty systems: nurse call and pneumatic tube with a few interface results.
+const nurseCall = await call(cxa, 'POST', `/projects/${project.id}/specialty-systems`, { type: 'nurse_call', name: 'Nurse call, 4 West' });
+const tube = await call(cxa, 'POST', `/projects/${project.id}/specialty-systems`, { type: 'pneumatic_tube', name: 'Pneumatic tube system' });
+await call(cxa, 'POST', `/systems/${nurseCall.id}/interface-tests`, { interfaceKey: 'ees', result: 'pass', evidenceReference: 'Cx/NurseCall/4W/EES-transfer.pdf' });
+await call(cxa, 'POST', `/systems/${nurseCall.id}/interface-tests`, { interfaceKey: 'phones', result: 'pass', evidenceReference: 'Cx/NurseCall/4W/phones.pdf' });
+await call(gc, 'POST', `/systems/${tube.id}/interface-tests`, { interfaceKey: 'fire_alarm', result: 'fail', notes: 'Zone 3 blower kept running during the fire alarm test' });
+
 console.log('\nDemo seeded. Sign in at http://localhost:5173 with PIN 2468 as:');
 for (const [k, u] of Object.entries(t.users)) console.log(`  ${k.padEnd(9)} ${u.email}`);
 await app.close();

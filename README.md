@@ -83,6 +83,12 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   prevention, safety, IT, clinical engineering), sessions, attendance by name only, and where the sign-in sheet is
   filed, with a branded training record. CMMS exports give an asset register with warranty end dates and a
   preventive maintenance schedule as CSV. Intervals are starting values pending review (verified=false).
+- **Specialty systems.** Nurse call, pneumatic tube, real-time location (RTLS) and imaging, each with its own
+  pre-functional checklist and functional test in the template library, the right discipline for turnover documents
+  and training audiences, and the interfaces to prove (essential power, fire alarm, phones, RTLS presence, protection
+  door locks, MRI quench and oxygen monitoring, X-ray warning lights). A passed interface test records where its record
+  is filed; a failure needs notes and opens an issue, flagged life safety where the interface is. Results feed the
+  survey binder and the final report. Lists are starting points pending review (verified=false).
 - **Survey binder.** One page and one printable, branded report that gathers the evidence a surveyor or AHJ asks
   for: room ventilation compliance, signed checklists and tests, essential electrical, ICRA, ILSM and fire watch,
   medical gas certification, life safety inspections and the Statement of Conditions, open issues, and record integrity (signature count and, for administrators, an audit

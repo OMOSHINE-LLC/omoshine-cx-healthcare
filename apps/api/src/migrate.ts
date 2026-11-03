@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
+import { SPECIALTY_TEMPLATES } from '@omoshine/rules';
 import { config } from './config.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -77,11 +78,12 @@ export async function migrate(adminUrl = config.adminDatabaseUrl): Promise<void>
   }
 }
 
+/** Adds any library template not yet present (by name), so new releases extend the library in place. */
 async function seedGlobalTemplates(client: pg.Client): Promise<void> {
-  const existing = await client.query('SELECT 1 FROM template WHERE tenant_id IS NULL LIMIT 1');
-  if (existing.rowCount) return;
   await client.query('BEGIN');
-  for (const t of GLOBAL_TEMPLATES) {
+  for (const t of [...GLOBAL_TEMPLATES, ...SPECIALTY_TEMPLATES]) {
+    const exists = await client.query('SELECT 1 FROM template WHERE tenant_id IS NULL AND name = $1', [t.name]);
+    if (exists.rowCount) continue;
     const familyId = randomUUID();
     const r = await client.query<{ id: string }>(
       `INSERT INTO template (tenant_id, family_id, version, kind, name, applies_to_system_type, published)
@@ -94,7 +96,7 @@ async function seedGlobalTemplates(client: pg.Client): Promise<void> {
       await client.query(
         `INSERT INTO template_item (template_id, seq, prompt, response_type, unit, required, requirement_key)
          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [templateId, seq++, it.prompt, it.type, it.unit ?? null, it.required ?? true, it.requirementKey ?? null],
+        [templateId, seq++, it.prompt, it.type, it.unit ?? null, it.required ?? true, 'requirementKey' in it ? it.requirementKey ?? null : null],
       );
     }
     await client.query('UPDATE template SET published = true WHERE id = $1', [templateId]);
