@@ -1,0 +1,10 @@
+{
+  "name": "@omoshine/rules",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": { "test": "vitest run" },
+  "devDependencies": { "vitest": "^2.1.9", "typescript": "^5.6.3" }
+}

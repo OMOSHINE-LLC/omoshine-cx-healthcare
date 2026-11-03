@@ -1,0 +1,13 @@
+{
+  "name": "omoshine-cx-healthcare",
+  "private": true,
+  "description": "OMOSHINE CX Planner – Healthcare Edition (OMOSHINE LLC)",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "npm run test -w @omoshine/rules && npm run test -w @omoshine/api && npm run test -w @omoshine/web",
+    "typecheck": "tsc -p packages/rules && tsc -p apps/api && tsc -p apps/web",
+    "dev:api": "npm run dev -w @omoshine/api",
+    "dev:web": "npm run dev -w @omoshine/web"
+  },
+  "engines": { "node": ">=20" }
+}
