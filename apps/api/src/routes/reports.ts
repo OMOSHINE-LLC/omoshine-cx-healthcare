@@ -35,7 +35,9 @@ export function reportShell(title: string, subtitle: string, body: string, logoU
   .chip { padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 11px; text-transform: uppercase; }
   .ls { color: #fff; background: #C00000; padding: 2px 8px; border-radius: 3px; font-weight: 700; }
   .meta { font-size: 12px; } .note { font-size: 11px; color: #4a4a4a; }
-  footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #072740; padding: 6px; border-top: 1px solid #B1844F; background: #F5F2EA; }
+  footer { text-align: center; font-size: 10px; color: #072740; padding: 6px; border-top: 1px solid #B1844F; background: #F5F2EA; }
+  /* On paper the footer repeats on every page; on screen it sits after the content. */
+  @media print { footer { position: fixed; bottom: 0; left: 0; right: 0; } }
 </style></head><body>
 <header><img src="${esc(logoUrl)}" alt="OMOSHINE logo"><div><h1>OMOSHINE CX Planner – Healthcare Edition</h1><p>${esc(title)} · ${esc(subtitle)}</p></div></header>
 <main>${body}</main>

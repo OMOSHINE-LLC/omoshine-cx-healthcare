@@ -65,6 +65,15 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   patrols, daily ICRA logs and life safety inspections made offline are kept on the device with the time they were
   made and sent when the connection returns; an entry the server refuses is kept for review. Signing always needs a
   connection.
+- **Operations turnover.** Each system's required hand-over documents by discipline (O&M manual, warranty, as-builts,
+  training record, plus TAB report, acceptance test report, sequence of operations, spare parts or certificates as
+  applicable). Contractors submit a reference to where each document is filed; someone other than the submitter
+  accepts it or rejects it with a note, and reviewed documents are closed (a correction is a new submission).
+  Warranties track their end date and flag those ending within 90 days. A branded turnover package report lists all of it.
+- **Final commissioning report.** A draft preview at any time, and an issued version that the CxA signs with
+  re-authentication. It covers the evidence areas from the survey binder, phased occupancy, turnover, warranties and
+  every outstanding item (life safety first). Each issued version is stored as frozen HTML with its SHA-256, is
+  append-only, and is re-checked against its hash whenever it is opened.
 - **Survey binder.** One page and one printable, branded report that gathers the evidence a surveyor or AHJ asks
   for: room ventilation compliance, signed checklists and tests, essential electrical, ICRA, ILSM and fire watch,
   medical gas certification, life safety inspections and the Statement of Conditions, open issues, and record integrity (signature count and, for administrators, an audit
