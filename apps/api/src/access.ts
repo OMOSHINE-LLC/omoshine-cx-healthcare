@@ -41,25 +41,28 @@ export type Permission =
   | 'phase.signoff'
   | 'turnover.submit'
   | 'turnover.review'
-  | 'report.issue';
+  | 'report.issue'
+  | 'compliance.manage'
+  | 'compliance.record'
+  | 'training.manage';
 
 /**
  * Role → permission matrix. AHJ / Inspector is read-and-sign only.
  * Clinical reps and infection prevention can raise issues but not execute tests in the MVP.
  */
 export const PERMISSIONS: Record<Role, Permission[]> = {
-  owner: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.sign', 'issue.create', 'issue.update', 'ilsm.manage', 'soc.manage', 'activation.manage', 'phase.signoff', 'turnover.review'],
-  cxa: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'measurement.record', 'ees.record', 'icra.manage', 'icra.log', 'ilsm.manage', 'firewatch.log', 'medgas.manage', 'ls.manage', 'ls.inspect', 'soc.manage', 'activation.manage', 'phase.signoff', 'turnover.submit', 'turnover.review', 'report.issue'],
-  gc: ['read', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'icra.manage', 'icra.log', 'firewatch.log', 'medgas.manage', 'ls.manage', 'ls.inspect', 'turnover.submit'],
-  trade: ['read', 'test.execute', 'test.sign', 'issue.update', 'icra.log', 'firewatch.log', 'ls.inspect', 'turnover.submit'],
-  infection_prevention: ['read', 'issue.create', 'issue.update', 'test.sign', 'icra.manage', 'icra.log', 'icra.approve', 'activation.manage'],
-  safety_officer: ['read', 'issue.create', 'issue.update', 'test.sign', 'ilsm.manage', 'firewatch.log', 'ls.manage', 'ls.inspect', 'soc.manage', 'activation.manage'],
-  clinical_rep: ['read', 'issue.create', 'activation.manage'],
+  owner: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.sign', 'issue.create', 'issue.update', 'ilsm.manage', 'soc.manage', 'activation.manage', 'phase.signoff', 'turnover.review', 'compliance.manage', 'training.manage'],
+  cxa: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'measurement.record', 'ees.record', 'icra.manage', 'icra.log', 'ilsm.manage', 'firewatch.log', 'medgas.manage', 'ls.manage', 'ls.inspect', 'soc.manage', 'activation.manage', 'phase.signoff', 'turnover.submit', 'turnover.review', 'report.issue', 'compliance.manage', 'compliance.record', 'training.manage'],
+  gc: ['read', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'icra.manage', 'icra.log', 'firewatch.log', 'medgas.manage', 'ls.manage', 'ls.inspect', 'turnover.submit', 'training.manage'],
+  trade: ['read', 'test.execute', 'test.sign', 'issue.update', 'icra.log', 'firewatch.log', 'ls.inspect', 'turnover.submit', 'compliance.record'],
+  infection_prevention: ['read', 'issue.create', 'issue.update', 'test.sign', 'icra.manage', 'icra.log', 'icra.approve', 'activation.manage', 'compliance.record'],
+  safety_officer: ['read', 'issue.create', 'issue.update', 'test.sign', 'ilsm.manage', 'firewatch.log', 'ls.manage', 'ls.inspect', 'soc.manage', 'activation.manage', 'compliance.manage', 'compliance.record'],
+  clinical_rep: ['read', 'issue.create', 'activation.manage', 'compliance.record'],
   medgas_verifier: ['read', 'test.execute', 'test.sign', 'issue.create', 'medgas.manage', 'medgas.test', 'turnover.submit'],
   tab: ['read', 'measurement.record', 'test.execute', 'test.sign', 'issue.update', 'turnover.submit'],
   ahj: ['read', 'test.sign'],
   design_engineer: ['read', 'issue.create', 'issue.update', 'turnover.submit'],
-  facilities_ops: ['read', 'issue.create', 'ees.record', 'test.execute', 'test.sign', 'firewatch.log', 'ls.manage', 'ls.inspect', 'soc.manage', 'activation.manage', 'turnover.review'],
+  facilities_ops: ['read', 'issue.create', 'ees.record', 'test.execute', 'test.sign', 'firewatch.log', 'ls.manage', 'ls.inspect', 'soc.manage', 'activation.manage', 'turnover.review', 'compliance.manage', 'compliance.record', 'training.manage'],
 };
 
 /** Signature meanings each role may apply. */

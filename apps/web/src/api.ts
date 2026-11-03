@@ -65,3 +65,13 @@ export async function openReport(path: string) {
   const url = URL.createObjectURL(new Blob([html.replace(/\/brand\/logo\.png/g, `${location.origin}/brand/logo.png`)], { type: 'text/html' }));
   window.open(url, '_blank', 'noopener');
 }
+
+/** Fetch an authenticated file and save it with the given name. */
+export async function download(path: string, filename: string) {
+  const res = await fetch(`/api/v1${path}`, { headers: { authorization: `Bearer ${getToken()}` } });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
