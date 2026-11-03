@@ -12,7 +12,7 @@ const db = createPool();
 const app = await buildApp({ db });
 const t = await seedTenant(config.adminDatabaseUrl, `demo${Date.now().toString(36)}`, '2468');
 
-async function call(token: string, method: 'GET' | 'POST' | 'PUT', url: string, payload?: unknown) {
+async function call(token: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH', url: string, payload?: unknown) {
   const r = await app.inject({ method, url: `/api/v1${url}`, ...(payload === undefined ? {} : { payload: payload as object }), headers: { authorization: `Bearer ${token}` } });
   if (r.statusCode >= 300) throw new Error(`${method} ${url} → ${r.statusCode} ${r.body}`);
   return r.json();
@@ -119,6 +119,13 @@ const yes = (kind: string) => Object.fromEntries(catalog.kinds[kind].items.map((
 await call(cxa, 'POST', `/ls-items/${lsTag('SD-2-001')}/inspections`, { answers: yes('smoke_detector') });
 await call(gc, 'POST', `/ls-items/${lsTag('D-2-101')}/inspections`, { answers: { ...yes('fire_door'), latches: false }, notes: 'Latch bolt does not engage the strike' });
 await call(safety, 'POST', `/projects/${project.id}/pfi`, { deficiency: 'Unsealed penetrations in 1-hour smoke barrier above corridor 2C ceiling', codeReference: 'NFPA 101 8.5.6', location: 'Level 2, corridor 2C', plannedCompletion: new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10) });
+
+// Activation: some of Phase 1's checklist is done.
+const act = await call(cxa, 'GET', `/phases/${ph1.id}/activation`);
+const actItem = (key: string) => act.items.find((i: { key: string }) => i.key === key).id;
+await call(cxa, 'PATCH', `/activation-items/${actItem('accreditor_notice')}`, { status: 'done', evidence: 'Notification letter sent to accreditor; confirmation on file' });
+await call(cxa, 'PATCH', `/activation-items/${actItem('air_balance_final')}`, { status: 'done', evidence: 'TAB final report rev 2 accepted by CxA' });
+await call(cxa, 'PATCH', `/activation-items/${actItem('move_plan')}`, { status: 'na', evidence: 'New service line; no patients transfer from existing units' });
 
 console.log('\nDemo seeded. Sign in at http://localhost:5173 with PIN 2468 as:');
 for (const [k, u] of Object.entries(t.users)) console.log(`  ${k.padEnd(9)} ${u.email}`);

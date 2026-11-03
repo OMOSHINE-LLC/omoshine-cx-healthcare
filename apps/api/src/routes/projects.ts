@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { seedActivationItems } from './activation.js';
 import { findSpaceType } from '@omoshine/rules';
 import { ROLES, scopeOfRoom } from '../access.js';
 import { appendAudit } from '../audit.js';
@@ -114,8 +115,11 @@ export async function projectRoutes(api: FastifyInstance, db: Db) {
       const id = idParam(req);
       await requirePermission(tx, p, { projectId: id }, 'hierarchy.edit');
       const b = nameBody.extend({ sequence: z.number().int().default(1), targetOccupancyDate: z.string().date().optional() }).parse(req.body);
+      const row = await insert(tx, 'phase', { tenant_id: p.tenantId, project_id: id, name: b.name, sequence: b.sequence, target_occupancy_date: b.targetOccupancyDate ?? null });
+      const state = (await tx.query<{ state_code: string }>('SELECT state_code FROM project WHERE id = $1', [id])).rows[0]!.state_code;
+      await seedActivationItems(tx, p.tenantId, row.id, state);
       reply.status(201);
-      return insert(tx, 'phase', { tenant_id: p.tenantId, project_id: id, name: b.name, sequence: b.sequence, target_occupancy_date: b.targetOccupancyDate ?? null });
+      return row;
     }),
   );
 

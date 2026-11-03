@@ -28,6 +28,8 @@ export const WEBHOOK_EVENTS: Record<string, string> = {
   'ls.inspect': 'life_safety.inspection_recorded',
   'pfi.create': 'soc.pfi_created',
   'pfi.resolve': 'soc.pfi_resolved',
+  'phase.ready': 'phase.signed_ready',
+  'phase.occupied': 'phase.occupied',
 };
 export const EVENT_NAMES = [...new Set(Object.values(WEBHOOK_EVENTS))].sort();
 
@@ -43,6 +45,8 @@ const PROJECT_OF: Record<string, string> = {
           JOIN building b ON b.id = f.building_id WHERE rm.id = $1`,
   ls_item: 'SELECT project_id FROM ls_item WHERE id = $1',
   pfi_item: 'SELECT project_id FROM pfi_item WHERE id = $1',
+  phase: 'SELECT project_id FROM phase WHERE id = $1',
+  activation_item: 'SELECT ph.project_id FROM activation_item a JOIN phase ph ON ph.id = a.phase_id WHERE a.id = $1',
   asset: 'SELECT s.project_id FROM asset a JOIN system s ON s.id = a.system_id WHERE a.id = $1',
 };
 
