@@ -299,12 +299,13 @@ export async function projectRoutes(api: FastifyInstance, db: Db) {
       const issues = await tx.query<{ status: string; life_safety: boolean; n: string }>(
         'SELECT status, life_safety, count(*) AS n FROM issue WHERE project_id = $1 GROUP BY status, life_safety', [id]);
       const rooms = await tx.query<{ phase_id: string | null; phase_name: string | null; overall: string | null; n: string }>(
-        `SELECT rm.phase_id, ph.name AS phase_name, latest.overall, count(*) AS n
+        `SELECT rm.phase_id, ph.name AS phase_name, ph.sequence, latest.overall, count(*) AS n
            FROM room rm
            JOIN department d ON d.id = rm.department_id JOIN floor f ON f.id = d.floor_id JOIN building b ON b.id = f.building_id
            LEFT JOIN phase ph ON ph.id = rm.phase_id
            LEFT JOIN LATERAL (SELECT overall FROM room_measurement m WHERE m.room_id = rm.id ORDER BY measured_at DESC, recorded_at DESC LIMIT 1) latest ON true
-          WHERE b.project_id = $1 GROUP BY rm.phase_id, ph.name, latest.overall`, [id]);
+          WHERE b.project_id = $1 GROUP BY rm.phase_id, ph.name, ph.sequence, latest.overall
+          ORDER BY ph.sequence NULLS LAST`, [id]);
       const n = (s: string) => Number(s);
       const testTotal = tests.rows.reduce((a, r) => a + n(r.n), 0);
       const testSigned = tests.rows.filter((r) => r.status === 'signed').reduce((a, r) => a + n(r.n), 0);
