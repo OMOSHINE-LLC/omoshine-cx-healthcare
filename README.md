@@ -18,7 +18,7 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
 | --- | --- |
 | `packages/rules` | Code-requirement library (ASHRAE 170, NFPA 99/110, USP 797/800), state profiles (CA, NY, FL, TX), overlay engine and pure compliance evaluators. |
 | `apps/api` | Fastify + PostgreSQL REST API (`/api/v1`). Row-level security per tenant, role and scope based access, e-signatures with step-up re-authentication, hash-chained audit log, TAB CSV import, branded HTML reports. |
-| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log and ILSM / fire watch screens. |
+| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log, ILSM / fire watch and medical gas verification screens. |
 
 ### Phase 2: infection control and interim life safety
 
@@ -31,8 +31,13 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   sprinkler system is out of service for more than 4 hours. An assessment cannot be resolved until every measure is
   documented, and it is locked once resolved.
 - **Fire watch.** One-tap patrol entries, append-only, with alerts for gaps longer than the patrol interval.
-- The ICRA matrix, control list, ILSM measures and fire watch thresholds are seeded as `verified: false` until the
-  consultant review confirms them.
+- **Medical gas verification (NFPA 99 Chapter 5).** Zones with their gases and outlets. The required tests are
+  built automatically: cross-connection and valve tests per zone; standing pressure, alarm, particulate and purity per
+  gas; function, pressure and flow, and concentration per outlet. Only the medical gas verifier records results, with
+  their credential; results are append-only and a failure opens a critical life safety issue. The verifier certifies
+  the zone with an e-signature once every latest result passes, and a new outlet or retest requires recertification.
+- The ICRA matrix, control list, ILSM measures, fire watch thresholds and medical gas limits are seeded as
+  `verified: false` until the consultant review confirms them.
 
 ## Running locally
 
@@ -92,7 +97,7 @@ What the tests cover:
 ## Not yet in the MVP
 
 Offline mobile app, photo markup, PDF rendering of reports (HTML reports are print-ready), SSO wiring,
-webhooks and the remaining Phase 2 and 3 modules (medical gas, survey binder, integrations, operations
+webhooks and the remaining Phase 2 and 3 modules (survey binder, integrations, operations
 handoff). See the design package for the roadmap.
 
 ---

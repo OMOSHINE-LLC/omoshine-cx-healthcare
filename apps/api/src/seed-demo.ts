@@ -24,7 +24,7 @@ async function login(email: string) {
 
 const admin = await login(t.users.admin.email);
 const project = await call(admin, 'POST', '/projects', { name: 'West Tower Surgical Expansion', facilityName: 'Riverside Medical Center', stateCode: 'CA', creatorRole: 'owner' });
-for (const [k, role] of [['cxa', 'cxa'], ['gc', 'gc'], ['tab', 'tab'], ['ahj', 'ahj'], ['clinical', 'clinical_rep']] as const) {
+for (const [k, role] of [['cxa', 'cxa'], ['gc', 'gc'], ['tab', 'tab'], ['ahj', 'ahj'], ['clinical', 'clinical_rep'], ['ip', 'infection_prevention'], ['safety', 'safety_officer'], ['medgas', 'medgas_verifier']] as const) {
   await call(admin, 'POST', `/projects/${project.id}/role-assignments`, { userId: t.users[k].id, role });
 }
 const cxa = await login(t.users.cxa.email);
@@ -74,6 +74,33 @@ await call(cxa, 'POST', `/assets/${gen.id}/generator-tests`, { testType: 'monthl
 await call(cxa, 'POST', `/projects/${project.id}/issues`, { title: 'OR-03 below 20 ACH and humidity above 60%', roomId: rooms['OR-03']!.id, requirementKey: 'ashrae170.or_class_bc.total_ach', ballInCourtOrgId: t.orgs.tab, priority: 'high' });
 await call(cxa, 'POST', `/projects/${project.id}/issues`, { title: '4W-12 isolation room reading positive', roomId: rooms['4W-12']!.id, requirementKey: 'ashrae170.aiir.pressure_relationship', lifeSafety: true, ballInCourtOrgId: t.orgs.gc });
 await call(cxa, 'POST', `/projects/${project.id}/issues`, { title: 'ATS-CR-2 transfer 11.4 s exceeds 10 s', systemId: ees.id, lifeSafety: true, ballInCourtOrgId: t.orgs.elec });
+
+// Phase 2: ICRA, ILSM and medical gas.
+const gc = await login(t.users.gc.email);
+const icraZone = await call(gc, 'POST', `/projects/${project.id}/icra-zones`, {
+  name: 'Level 2 OR suite renovation', departmentId: surg.id, constructionType: 'D', riskGroup: 'highest',
+  barrierType: 'Hard wall, floor to deck, with anteroom', adjacentAreas: 'OR-01 and OR-02 (occupied), sterile core',
+});
+await call(gc, 'POST', `/icra-zones/${icraZone.id}/logs`, {
+  controls: Object.fromEntries(icraZone.controls.map((c: { key: string }) => [c.key, true])), pressureDiffInWc: -0.02,
+});
+const safety = await login(t.users.safety.email);
+await call(safety, 'POST', `/projects/${project.id}/ilsm-assessments`, {
+  deficiencyType: 'fire_alarm_impaired', description: 'Level 2 west detection loop disabled for device replacement',
+  location: 'Level 2 west wing', expectedOutOfServiceHours: 12,
+});
+const mg = await call(cxa, 'POST', `/projects/${project.id}/medgas-zones`, { name: 'OR suite zone 2A', departmentId: surg.id, zoneValveTag: 'ZVB-2A', gases: ['oxygen', 'medical_air', 'vacuum'] });
+await call(gc, 'POST', `/medgas-zones/${mg.id}/outlets`, { outlets: ['OR-01', 'OR-02'].flatMap((r) => [
+  { label: `${r} O2-1`, gas: 'oxygen', roomId: rooms[r]!.id }, { label: `${r} MA-1`, gas: 'medical_air', roomId: rooms[r]!.id },
+  { label: `${r} VAC-1`, gas: 'vacuum', roomId: rooms[r]!.id },
+]) });
+const verifier = await login(t.users.medgas.email);
+const cred = { verifierCredential: 'ASSE 6030 #DEMO-001' };
+await call(verifier, 'POST', `/medgas-zones/${mg.id}/tests`, { testType: 'cross_connection', readings: { outletsTested: 6, wrongGasFound: false }, ...cred });
+for (const gas of ['oxygen', 'medical_air', 'vacuum']) {
+  await call(verifier, 'POST', `/medgas-zones/${mg.id}/tests`, { testType: 'standing_pressure', gas, readings: { durationHours: 24, leakFound: false }, ...cred });
+}
+await call(verifier, 'POST', `/medgas-zones/${mg.id}/tests`, { testType: 'piping_purity', gas: 'oxygen', readings: { dewPointF: 61, hydrocarbonDeltaPpm: 1 }, notes: 'Moisture in branch; purge and retest', ...cred });
 
 console.log('\nDemo seeded. Sign in at http://localhost:5173 with PIN 2468 as:');
 for (const [k, u] of Object.entries(t.users)) console.log(`  ${k.padEnd(9)} ${u.email}`);
