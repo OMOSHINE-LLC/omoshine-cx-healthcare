@@ -22,13 +22,14 @@ import { API_KEY_PATTERN, integrationRoutes } from './routes/integrations.js';
 import { connectorRoutes } from './routes/connectors.js';
 import { lifeSafetyRoutes } from './routes/lifesafety.js';
 import { activationRoutes } from './routes/activation.js';
+import { ssoRoutes } from './routes/sso.js';
 import { sha256 } from './crypto.js';
 import { timingSafeEqual } from 'node:crypto';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const LOGO_PATH = join(here, '..', 'assets', 'omoshine-logo.png');
 
-const PUBLIC_ROUTES = new Set(['/api/v1/auth/dev-login', '/api/v1/health', '/brand/logo.png']);
+const PUBLIC_ROUTES = new Set(['/api/v1/auth/dev-login', '/api/v1/auth/sso/start', '/api/v1/auth/sso/callback', '/api/v1/health', '/brand/logo.png']);
 
 /** Resolve an integration API key to its service user. */
 async function principalForApiKey(db: Db, token: string): Promise<Principal> {
@@ -96,6 +97,7 @@ export async function buildApp(opts: { db: Db; logger?: boolean; fetchImpl?: typ
     await connectorRoutes(api, opts.db, () => opts.fetchImpl ?? fetch);
     await lifeSafetyRoutes(api, opts.db);
     await activationRoutes(api, opts.db);
+    await ssoRoutes(api, opts.db);
   }, { prefix: '/api/v1' });
 
   return app;

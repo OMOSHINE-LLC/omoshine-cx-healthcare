@@ -53,6 +53,18 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   ready (e-signature with re-authentication) only when every gate passes; the owner then records occupancy, which
   locks the phase and its checklist. A phase signed ready whose evidence later fails shows as lapsed. A branded
   activation report covers gates, checklist and sign-offs.
+- **Single sign-on (OpenID Connect).** A tenant administrator connects the hospital's identity provider (Entra ID,
+  Okta, Ping or any OIDC provider) for its email domains. Sign-in uses the authorization code flow with PKCE; the ID
+  token is checked against the provider's keys, issuer, audience, nonce and a verified email. The first sign-in links
+  the provider's subject to the account, and a different subject for that email is refused afterwards. New people are
+  created (with no project roles) only when the connection allows it. E-signatures can use an SSO step-up (fresh
+  sign-in forced with `prompt=login`, `max_age=0`, and `auth_time` checked) instead of the signing PIN, and a connection
+  can require it. The client secret is encrypted at rest. Set `WEB_BASE_URL` to the web app's public URL.
+- **Installable app with offline field entries.** The web app installs to a phone or tablet home screen. Pages already
+  opened on the device still show their last data offline (cached per person and cleared on sign-out). Fire watch
+  patrols, daily ICRA logs and life safety inspections made offline are kept on the device with the time they were
+  made and sent when the connection returns; an entry the server refuses is kept for review. Signing always needs a
+  connection.
 - **Survey binder.** One page and one printable, branded report that gathers the evidence a surveyor or AHJ asks
   for: room ventilation compliance, signed checklists and tests, essential electrical, ICRA, ILSM and fire watch,
   medical gas certification, life safety inspections and the Statement of Conditions, open issues, and record integrity (signature count and, for administrators, an audit
@@ -130,12 +142,13 @@ What the tests cover:
 - Each signature stores the SHA-256 of the canonical record content, the signer, role, meaning and
   re-authentication method. `GET /test-runs/:id/verify` re-checks them.
 - The audit log is a per-tenant hash chain; `GET /audit/verify` recomputes it.
-- Dev login uses email + PIN. Production uses the hospital's IdP (OIDC/SAML) with step-up for signing.
+- Dev login uses email + PIN (`AUTH_MODE=dev`). Production sets `AUTH_MODE=oidc` and signs in through the hospital's
+  OIDC provider, with SSO step-up or the signing PIN for e-signatures as each connection allows.
   Change `JWT_SECRET` and the `omoshine_app` password before any shared deployment.
 
 ## Not yet in the MVP
 
-Offline mobile app, photo markup, PDF rendering of reports (HTML reports are print-ready), SSO wiring, Procore / ACC OAuth token refresh, the life safety module, phased activation and the Phase 3 operations modules. See the design
+Native app store builds (the installable web app covers phones and tablets), SAML (OIDC only for now), photo markup, PDF rendering of reports (HTML reports are print-ready), Procore / ACC OAuth token refresh, and the Phase 3 operations modules. See the design
 package for the roadmap.
 
 ---

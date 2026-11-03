@@ -1,3 +1,4 @@
+import { enqueue, isOffline, offlineRouteFor } from './offline';
 const TOKEN_KEY = 'omoshine.session';
 
 export class ApiError extends Error {
@@ -23,10 +24,20 @@ export function setToken(token: string | null) {
   }
 }
 
+/** Returned instead of the server's response when a field entry was saved on the device to send later. */
+export interface QueuedOffline { queuedOffline: true; label: string }
+export const OFFLINE_SAVED = 'Saved on this device while offline. It will be sent when the connection returns.';
+export const isQueued = (r: unknown): r is QueuedOffline => !!r && typeof r === 'object' && (r as QueuedOffline).queuedOffline === true;
+
 export async function api<T = any>(path: string, init: { method?: string; body?: unknown; headers?: Record<string, string>; raw?: boolean } = {}): Promise<T> {
   const token = getToken();
+  const method = init.method ?? (init.body ? 'POST' : 'GET');
+  if (method === 'POST' && isOffline() && offlineRouteFor(path) && !init.headers?.['x-reauth-token']) {
+    const e = await enqueue(path, (init.body ?? {}) as Record<string, unknown>, token);
+    return { queuedOffline: true, label: e.label } as T;
+  }
   const res = await fetch(`/api/v1${path}`, {
-    method: init.method ?? (init.body ? 'POST' : 'GET'),
+    method,
     headers: {
       ...(init.body ? { 'content-type': 'application/json' } : {}),
       ...(token ? { authorization: `Bearer ${token}` } : {}),

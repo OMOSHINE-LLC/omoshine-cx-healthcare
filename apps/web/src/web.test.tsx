@@ -7,6 +7,7 @@ import { RoomDataSheetView, RoomGridView, type DataSheet } from './pages/RoomCom
 import { EesDashboardView, type EesSummary } from './pages/Ees';
 import { ReadinessView } from './pages/Home';
 import { SignDialog } from './pages/TestRuns';
+import { resetSigningMethods } from './reauth';
 
 describe('status indicators', () => {
   it('always carry a text label, not colour alone', () => {
@@ -116,19 +117,47 @@ describe('readiness dashboard', () => {
 });
 
 describe('signing', () => {
-  it('requires the PIN and a signature meaning before signing', async () => {
+  const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  function stubApi(signing: { sso: boolean; pin: boolean }, reauth: (pin: string) => Response) {
+    resetSigningMethods();
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      calls.push(url);
+      if (url.endsWith('/me')) return json(200, { user: {}, assignments: [], signing });
+      if (url.endsWith('/auth/reauth')) return reauth(JSON.parse(String(init?.body)).pin);
+      return json(404, { title: 'not found' });
+    }));
+    return calls;
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('re-authenticates with the PIN and passes the token and meaning on', async () => {
+    stubApi({ sso: false, pin: true }, (pin) => json(200, { reauthToken: `tok-${pin}` }));
     const onSign = vi.fn().mockResolvedValue(undefined);
     render(<SignDialog onSign={onSign} onClose={() => {}} />);
     await userEvent.selectOptions(screen.getByLabelText('Signature meaning'), 'witnessed');
-    await userEvent.type(screen.getByLabelText('Re-enter your signing PIN'), '2468');
+    await userEvent.type(await screen.findByLabelText('Re-enter your signing PIN'), '2468');
     await userEvent.click(screen.getByRole('button', { name: 'Sign' }));
-    expect(onSign).toHaveBeenCalledWith('2468', 'witnessed');
+    expect(onSign).toHaveBeenCalledWith('tok-2468', 'witnessed');
+    expect(screen.queryByRole('button', { name: /single sign-on/ })).toBeNull();
   });
   it('shows a server refusal', async () => {
-    render(<SignDialog onSign={() => Promise.reject(new Error('Re-authentication failed'))} onClose={() => {}} />);
-    await userEvent.type(screen.getByLabelText('Re-enter your signing PIN'), '0000');
+    stubApi({ sso: false, pin: true }, () => json(401, { title: 'Re-authentication failed' }));
+    render(<SignDialog onSign={vi.fn()} onClose={() => {}} />);
+    await userEvent.type(await screen.findByLabelText('Re-enter your signing PIN'), '0000');
     await userEvent.click(screen.getByRole('button', { name: 'Sign' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Re-authentication failed');
+  });
+  it('offers single sign-on, and only SSO when the organization turns PIN signing off', async () => {
+    stubApi({ sso: true, pin: true }, () => json(200, { reauthToken: 't' }));
+    const { unmount } = render(<SignDialog onSign={vi.fn()} onClose={() => {}} />);
+    expect(await screen.findByRole('button', { name: 'Sign with single sign-on instead' })).toBeInTheDocument();
+    unmount();
+    stubApi({ sso: true, pin: false }, () => json(200, { reauthToken: 't' }));
+    render(<SignDialog onSign={vi.fn()} onClose={() => {}} />);
+    expect(await screen.findByRole('button', { name: 'Sign with single sign-on' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Re-enter your signing PIN')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Sign' })).toBeNull();
   });
 });
 

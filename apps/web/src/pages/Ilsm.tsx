@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '../api';
+import { OFFLINE_SAVED, api, isQueued } from '../api';
 import { LifeSafetyFlag, Loading, StatusChip, fmtDate, useApi } from '../components';
 
 export interface Assessment {
@@ -33,8 +33,8 @@ export function AssessmentCard({ a, catalog, onToggleMeasure, onPatrol, onResolv
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {a.required_measures.map((m) => (
           <li key={m}>
-            <label className="row" style={{ display: 'flex', fontWeight: 400 }}>
-              <input type="checkbox" style={{ minHeight: 0, width: 'auto' }} disabled={a.status !== 'open'} checked={a.implemented_measures.includes(m)} onChange={(e) => onToggleMeasure(m, e.target.checked)} />
+            <label className="row" style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'flex-start', gap: 10, fontWeight: 400, marginBottom: 6 }}>
+              <input type="checkbox" style={{ minHeight: 0, width: 'auto', marginTop: 4, flex: 'none' }} disabled={a.status !== 'open'} checked={a.implemented_measures.includes(m)} onChange={(e) => onToggleMeasure(m, e.target.checked)} />
               {catalog.measures[m] ?? m}
             </label>
           </li>
@@ -69,10 +69,12 @@ export function IlsmPage() {
   const catalog = useApi<Catalog>('/ilsm/catalog');
   const [form, setForm] = useState({ deficiencyType: 'fire_alarm_impaired', description: '', location: '', hours: '' });
   const [err, setErr] = useState<string | null>(null);
-  const run = async (fn: () => Promise<unknown>) => { setErr(null); try { await fn(); list.reload(); } catch (x) { setErr((x as Error).message); } };
+  const [msg, setMsg] = useState<string | null>(null);
+  const run = async (fn: () => Promise<unknown>) => { setErr(null); setMsg(null); try { await fn(); list.reload(); } catch (x) { setErr((x as Error).message); } };
   return (
     <>
       <h1>Interim life safety (ILSM)</h1>
+      {msg && <p className="card" role="status">{msg}</p>}
       {catalog.data && (
         <form className="card form-grid" onSubmit={(e) => { e.preventDefault(); run(() => api(`/projects/${projectId}/ilsm-assessments`, { body: { deficiencyType: form.deficiencyType, description: form.description, location: form.location, expectedOutOfServiceHours: Number(form.hours) } })); }}>
           <label>Deficiency<select value={form.deficiencyType} onChange={(e) => setForm({ ...form, deficiencyType: e.target.value })}>{Object.entries(catalog.data.deficiencyTypes).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
@@ -87,7 +89,7 @@ export function IlsmPage() {
         {catalog.data && list.data?.map((a) => (
           <AssessmentCard key={a.id} a={a} catalog={catalog.data!}
             onToggleMeasure={(m, on) => run(() => api(`/ilsm-assessments/${a.id}`, { method: 'PATCH', body: { implementedMeasures: on ? [...a.implemented_measures, m] : a.implemented_measures.filter((x) => x !== m) } }))}
-            onPatrol={(allClear, findings) => run(() => api(`/ilsm-assessments/${a.id}/fire-watch`, { body: { area: a.location, allClear, findings } }))}
+            onPatrol={(allClear, findings) => run(async () => { if (isQueued(await api(`/ilsm-assessments/${a.id}/fire-watch`, { body: { area: a.location, allClear, findings } }))) setMsg(OFFLINE_SAVED); })}
             onResolve={() => run(() => api(`/ilsm-assessments/${a.id}`, { method: 'PATCH', body: { status: 'resolved' } }))}
           />
         ))}

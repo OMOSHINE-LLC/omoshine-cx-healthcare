@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ReauthForm } from '../reauth';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { Loading, StatusChip, fmtDate, useApi } from '../components';
@@ -72,16 +73,12 @@ interface RunDetail {
 }
 
 /** Re-authenticate, then sign. The PIN is never stored. */
-export function SignDialog({ onSign, onClose }: { onSign: (pin: string, meaning: string) => Promise<void>; onClose: () => void }) {
-  const [pin, setPin] = useState('');
+/** Signing dialog: choose the meaning, then re-authenticate (PIN or single sign-on). onSign receives the re-authentication token. */
+export function SignDialog({ onSign, onClose }: { onSign: (reauthToken: string, meaning: string) => Promise<void>; onClose: () => void }) {
   const [meaning, setMeaning] = useState('performed');
-  const [err, setErr] = useState<string | null>(null);
   return (
     <div className="dialog-backdrop" role="dialog" aria-modal="true" aria-labelledby="sign-title">
-      <form className="dialog" onSubmit={async (e) => {
-        e.preventDefault();
-        try { await onSign(pin, meaning); } catch (x) { setErr((x as Error).message); }
-      }}>
+      <ReauthForm onClose={onClose} onToken={(token) => onSign(token, meaning)}>
         <h2 id="sign-title">Sign this record</h2>
         <p className="muted">Signing locks the record. Corrections will require a superseding test.</p>
         <label>Signature meaning
@@ -91,13 +88,7 @@ export function SignDialog({ onSign, onClose }: { onSign: (pin: string, meaning:
             <option value="ahj_accepted">AHJ accepted</option>
           </select>
         </label>
-        <label style={{ marginTop: 8 }}>Re-enter your signing PIN<input type="password" autoComplete="off" required minLength={4} value={pin} onChange={(e) => setPin(e.target.value)} /></label>
-        {err && <p className="error" role="alert">{err}</p>}
-        <div className="row" style={{ marginTop: 12 }}>
-          <button className="primary" type="submit">Sign</button>
-          <button type="button" onClick={onClose}>Cancel</button>
-        </div>
-      </form>
+      </ReauthForm>
     </div>
   );
 }
@@ -174,8 +165,7 @@ export function TestRunPage() {
       {signing && (
         <SignDialog
           onClose={() => setSigning(false)}
-          onSign={async (pin, meaning) => {
-            const { reauthToken } = await api<{ reauthToken: string }>('/auth/reauth', { body: { pin } });
+          onSign={async (reauthToken, meaning) => {
             await api(`/test-runs/${runId}/signatures`, { body: { meaning }, headers: { 'x-reauth-token': reauthToken } });
             setSigning(false);
             reload();

@@ -6,6 +6,7 @@ import { config } from '../config.js';
 import { verifyPin } from '../crypto.js';
 import { withTenant, type Db } from '../db.js';
 import { HttpError, tenantTx } from '../http.js';
+import { connectionForEmail } from './sso.js';
 
 export async function authRoutes(api: FastifyInstance, db: Db) {
   /** Development login (email + PIN). Production deployments use OIDC/SAML through the IdP broker. */
@@ -28,7 +29,9 @@ export async function authRoutes(api: FastifyInstance, db: Db) {
   api.post('/auth/reauth', async (req) =>
     tenantTx(db, req, async (tx, p) => {
       const body = z.object({ pin: z.string().min(4) }).parse(req.body);
-      const r = await tx.query<{ signing_pin_hash: string | null }>('SELECT signing_pin_hash FROM app_user WHERE id = $1', [p.userId]);
+      const r = await tx.query<{ signing_pin_hash: string | null; email: string }>('SELECT signing_pin_hash, email FROM app_user WHERE id = $1', [p.userId]);
+      const sso = r.rows[0] ? await connectionForEmail(tx, r.rows[0].email) : null;
+      if (sso && !sso.allow_pin_signing) throw new HttpError(403, 'Your organization requires single sign-on to sign; re-authenticate with SSO', 'sso_required');
       if (!verifyPin(body.pin, r.rows[0]?.signing_pin_hash)) throw new HttpError(401, 'Re-authentication failed', 'reauth_failed');
       return { reauthToken: await issueReauthToken(p, 'pin'), expiresInSeconds: config.reauthMaxAgeSeconds };
     }),
@@ -36,9 +39,10 @@ export async function authRoutes(api: FastifyInstance, db: Db) {
 
   api.get('/me', async (req) =>
     tenantTx(db, req, async (tx, p) => {
-      const u = await tx.query('SELECT id, email, name, is_tenant_admin, organization_id FROM app_user WHERE id = $1', [p.userId]);
+      const u = await tx.query('SELECT id, email, name, is_tenant_admin, organization_id, sso_subject IS NOT NULL AS sso_linked FROM app_user WHERE id = $1', [p.userId]);
       const a = await tx.query('SELECT project_id, role, scope_type, scope_id FROM role_assignment WHERE user_id = $1', [p.userId]);
-      return { user: u.rows[0], assignments: a.rows };
+      const sso = u.rows[0] ? await connectionForEmail(tx, u.rows[0].email) : null;
+      return { user: u.rows[0], assignments: a.rows, signing: { sso: !!sso && !!u.rows[0]?.sso_linked, pin: !sso || sso.allow_pin_signing } };
     }),
   );
 

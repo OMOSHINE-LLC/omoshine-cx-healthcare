@@ -93,3 +93,8 @@ button[aria-pressed='true']:disabled { opacity: 0.85; }
 .dialog-backdrop { position: fixed; inset: 0; background: rgba(6, 26, 44, 0.55); display: grid; place-items: center; padding: 16px; }
 .dialog { background: var(--white); border-radius: var(--radius); padding: 20px; width: 100%; max-width: 420px; border-top: 4px solid var(--gold); }
 .pressure { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+
+/* Offline status: ivory on deep navy, readable in grayscale. */
+.offline-banner { background: var(--deep-navy, #061A2C); color: #F5F2EA; padding: 10px 16px; font-size: 14px; }
+.offline-banner button { margin-left: 8px; padding: 4px 10px; min-height: 32px; }
+.offline-banner ul { margin: 6px 0 0; padding-left: 18px; }

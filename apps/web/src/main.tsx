@@ -1,8 +1,10 @@
-import { StrictMode, useState } from 'react';
+import { StrictMode, useCallback, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { BrowserRouter, NavLink, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import './theme.css';
 import { getToken, setToken } from './api';
+import { OfflineBanner } from './OfflineBanner';
+import { SSO_CALLBACK_PATH, SsoCallbackPage, resetSigningMethods } from './reauth';
 import { DashboardPage, LoginPage, ProjectsPage } from './pages/Home';
 import { RoomGridPage, RoomPage } from './pages/RoomCompliance';
 import { EesPage } from './pages/Ees';
@@ -50,6 +52,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
         <span className="spacer" />
         <button onClick={onLogout}>Sign out</button>
       </header>
+      <OfflineBanner />
       <Routes>
         <Route path="/" element={<div className="layout"><ProjectNav /><main className="content"><ProjectsPage /></main></div>} />
         <Route path="/projects/:projectId/*" element={
@@ -84,7 +87,15 @@ function Shell({ onLogout }: { onLogout: () => void }) {
 
 function App() {
   const [authed, setAuthed] = useState(!!getToken());
-  return authed ? <Shell onLogout={() => { setToken(null); setAuthed(false); }} /> : <LoginPage onLogin={() => setAuthed(true)} />;
+  const navigate = useNavigate();
+  const onSso = useCallback((token: string) => { setToken(token); resetSigningMethods(); setAuthed(true); navigate('/', { replace: true }); }, [navigate]);
+  if (location.pathname === SSO_CALLBACK_PATH) return <SsoCallbackPage onLogin={onSso} />;
+  return authed ? <Shell onLogout={() => { setToken(null); resetSigningMethods(); navigator.serviceWorker?.controller?.postMessage('clear-api-cache'); setAuthed(false); }} /> : <LoginPage onLogin={() => { resetSigningMethods(); setAuthed(true); }} />;
+}
+
+// Installable app with an offline shell. Not registered in development, where Vite serves modules live.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* offline support unavailable */ }); });
 }
 
 createRoot(document.getElementById('root')!).render(
