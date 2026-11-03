@@ -32,7 +32,7 @@ export function tenantTx<T>(db: Db, req: FastifyRequest, fn: (tx: Tx, p: Princip
   return withTenant(db, p.tenantId, (tx) => fn(tx, p));
 }
 
-async function isTenantAdmin(tx: Tx, userId: string): Promise<boolean> {
+export async function isTenantAdmin(tx: Tx, userId: string): Promise<boolean> {
   const r = await tx.query<{ is_tenant_admin: boolean }>('SELECT is_tenant_admin FROM app_user WHERE id = $1', [userId]);
   return !!r.rows[0]?.is_tenant_admin;
 }

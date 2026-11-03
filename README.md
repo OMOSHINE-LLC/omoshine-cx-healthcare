@@ -18,7 +18,7 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
 | --- | --- |
 | `packages/rules` | Code-requirement library (ASHRAE 170, NFPA 99/110, USP 797/800), state profiles (CA, NY, FL, TX), overlay engine and pure compliance evaluators. |
 | `apps/api` | Fastify + PostgreSQL REST API (`/api/v1`). Row-level security per tenant, role and scope based access, e-signatures with step-up re-authentication, hash-chained audit log, TAB CSV import, branded HTML reports. |
-| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log, ILSM / fire watch and medical gas verification screens. |
+| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log, ILSM / fire watch, medical gas verification and survey binder screens. |
 
 ### Phase 2: infection control and interim life safety
 
@@ -36,6 +36,10 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   gas; function, pressure and flow, and concentration per outlet. Only the medical gas verifier records results, with
   their credential; results are append-only and a failure opens a critical life safety issue. The verifier certifies
   the zone with an e-signature once every latest result passes, and a new outlet or retest requires recertification.
+- **Survey binder.** One page and one printable, branded report that gathers the evidence a surveyor or AHJ asks
+  for: room ventilation compliance, signed checklists and tests, essential electrical, ICRA, ILSM and fire watch,
+  medical gas certification, open issues, and record integrity (signature count and, for administrators, an audit
+  chain check). It lists the gaps to close before the survey, life safety first. Generating the report is audited.
 - The ICRA matrix, control list, ILSM measures, fire watch thresholds and medical gas limits are seeded as
   `verified: false` until the consultant review confirms them.
 
@@ -97,7 +101,7 @@ What the tests cover:
 ## Not yet in the MVP
 
 Offline mobile app, photo markup, PDF rendering of reports (HTML reports are print-ready), SSO wiring,
-webhooks and the remaining Phase 2 and 3 modules (survey binder, integrations, operations
+webhooks and the remaining Phase 2 and 3 modules (integrations, operations
 handoff). See the design package for the roadmap.
 
 ---
