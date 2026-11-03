@@ -18,11 +18,27 @@ import { reportRoutes } from './routes/reports.js';
 import { icraRoutes } from './routes/icra.js';
 import { medgasRoutes } from './routes/medgas.js';
 import { binderRoutes } from './routes/binder.js';
+import { API_KEY_PATTERN, integrationRoutes } from './routes/integrations.js';
+import { sha256 } from './crypto.js';
+import { timingSafeEqual } from 'node:crypto';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const LOGO_PATH = join(here, '..', 'assets', 'omoshine-logo.png');
 
 const PUBLIC_ROUTES = new Set(['/api/v1/auth/dev-login', '/api/v1/health', '/brand/logo.png']);
+
+/** Resolve an integration API key to its service user. */
+async function principalForApiKey(db: Db, token: string): Promise<Principal> {
+  const m = API_KEY_PATTERN.exec(token);
+  const bad = () => new HttpError(401, 'Invalid API key', 'unauthenticated');
+  if (!m) throw bad();
+  const row = (await db.query<{ key_id: string; tenant_id: string; user_id: string; user_name: string; secret_sha256: string }>(
+    'SELECT * FROM resolve_api_key($1)', [m[1]])).rows[0];
+  const given = Buffer.from(sha256(m[2]!), 'hex');
+  if (!row || !timingSafeEqual(given, Buffer.from(row.secret_sha256, 'hex'))) throw bad();
+  await db.query('SELECT touch_api_key($1)', [row.key_id]);
+  return { userId: row.user_id, tenantId: row.tenant_id, name: row.user_name };
+}
 
 export async function buildApp(opts: { db: Db; logger?: boolean }): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? false, bodyLimit: 10 * 1024 * 1024 });
@@ -33,8 +49,13 @@ export async function buildApp(opts: { db: Db; logger?: boolean }): Promise<Fast
     if (PUBLIC_ROUTES.has(path) || req.method === 'OPTIONS') return;
     const header = req.headers.authorization;
     if (!header?.startsWith('Bearer ')) throw new HttpError(401, 'Authentication required', 'unauthenticated');
+    const token = header.slice(7);
+    if (token.startsWith('omk_')) {
+      (req as FastifyRequest & { principal?: Principal }).principal = await principalForApiKey(opts.db, token);
+      return;
+    }
     try {
-      (req as FastifyRequest & { principal?: Principal }).principal = await verifySessionToken(header.slice(7));
+      (req as FastifyRequest & { principal?: Principal }).principal = await verifySessionToken(token);
     } catch {
       throw new HttpError(401, 'Invalid or expired session', 'unauthenticated');
     }
@@ -68,6 +89,7 @@ export async function buildApp(opts: { db: Db; logger?: boolean }): Promise<Fast
     await icraRoutes(api, opts.db);
     await medgasRoutes(api, opts.db);
     await binderRoutes(api, opts.db);
+    await integrationRoutes(api, opts.db);
   }, { prefix: '/api/v1' });
 
   return app;

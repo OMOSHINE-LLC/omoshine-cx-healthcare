@@ -12,6 +12,7 @@ import { IcraPage } from './pages/Icra';
 import { IlsmPage } from './pages/Ilsm';
 import { MedGasPage } from './pages/MedGas';
 import { SurveyBinderPage } from './pages/SurveyBinder';
+import { IntegrationsPage } from './pages/Integrations';
 
 function ProjectNav() {
   const { projectId } = useParams();
@@ -28,6 +29,7 @@ function ProjectNav() {
       <NavLink to={`${base}/ilsm`}>Interim life safety</NavLink>
       <NavLink to={`${base}/medgas`}>Medical gas</NavLink>
       <NavLink to={`${base}/binder`}>Survey binder</NavLink>
+      <NavLink to={`${base}/integrations`}>Integrations</NavLink>
       <NavLink to={`${base}/issues`}>Issues</NavLink>
     </nav>
   );
@@ -60,6 +62,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
                 <Route path="ilsm" element={<IlsmPage />} />
                 <Route path="medgas" element={<MedGasPage />} />
                 <Route path="binder" element={<SurveyBinderPage />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
               </Routes>
             </main>
           </div>
