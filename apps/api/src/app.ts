@@ -17,6 +17,7 @@ import { eesRoutes } from './routes/ees.js';
 import { reportRoutes } from './routes/reports.js';
 import { icraRoutes } from './routes/icra.js';
 import { medgasRoutes } from './routes/medgas.js';
+import { binderRoutes } from './routes/binder.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const LOGO_PATH = join(here, '..', 'assets', 'omoshine-logo.png');
@@ -66,6 +67,7 @@ export async function buildApp(opts: { db: Db; logger?: boolean }): Promise<Fast
     await reportRoutes(api, opts.db);
     await icraRoutes(api, opts.db);
     await medgasRoutes(api, opts.db);
+    await binderRoutes(api, opts.db);
   }, { prefix: '/api/v1' });
 
   return app;

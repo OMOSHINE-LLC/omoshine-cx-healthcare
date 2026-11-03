@@ -11,6 +11,7 @@ import { TestRunPage, TestRunsPage } from './pages/TestRuns';
 import { IcraPage } from './pages/Icra';
 import { IlsmPage } from './pages/Ilsm';
 import { MedGasPage } from './pages/MedGas';
+import { SurveyBinderPage } from './pages/SurveyBinder';
 
 function ProjectNav() {
   const { projectId } = useParams();
@@ -26,6 +27,7 @@ function ProjectNav() {
       <NavLink to={`${base}/icra`}>Infection control (ICRA)</NavLink>
       <NavLink to={`${base}/ilsm`}>Interim life safety</NavLink>
       <NavLink to={`${base}/medgas`}>Medical gas</NavLink>
+      <NavLink to={`${base}/binder`}>Survey binder</NavLink>
       <NavLink to={`${base}/issues`}>Issues</NavLink>
     </nav>
   );
@@ -57,6 +59,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
                 <Route path="icra" element={<IcraPage />} />
                 <Route path="ilsm" element={<IlsmPage />} />
                 <Route path="medgas" element={<MedGasPage />} />
+                <Route path="binder" element={<SurveyBinderPage />} />
               </Routes>
             </main>
           </div>

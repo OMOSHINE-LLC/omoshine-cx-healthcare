@@ -36,7 +36,7 @@ async function loadZone(tx: Tx, id: string): Promise<ZoneRow> {
 }
 const zoneScope = (z: ZoneRow) => ({ projectId: z.project_id, departmentId: z.department_id });
 
-async function zoneState(tx: Tx, zone: ZoneRow) {
+export async function zoneState(tx: Tx, zone: ZoneRow) {
   const outlets = (await tx.query<OutletRow>(
     `SELECT o.*, r.number AS room_number FROM medgas_outlet o LEFT JOIN room r ON r.id = o.room_id WHERE o.zone_id = $1 ORDER BY o.label`, [zone.id])).rows;
   const tests = (await tx.query<TestRow>(

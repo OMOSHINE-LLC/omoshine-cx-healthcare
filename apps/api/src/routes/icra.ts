@@ -45,7 +45,7 @@ export function zoneDigest(z: ZoneRow): string {
   }));
 }
 
-async function approvalOf(tx: Tx, z: ZoneRow) {
+export async function approvalOf(tx: Tx, z: ZoneRow) {
   const sigs = (await tx.query<{ signer_name: string; signed_at: Date; record_sha256: string; signer_role: string }>(
     `SELECT signer_name, signed_at, record_sha256, signer_role FROM signature WHERE record_type = 'icra_zone' AND record_id = $1 ORDER BY signed_at DESC`, [z.id])).rows;
   const digest = zoneDigest(z);
