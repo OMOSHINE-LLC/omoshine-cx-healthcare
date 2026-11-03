@@ -35,6 +35,7 @@ export const WEBHOOK_EVENTS: Record<string, string> = {
   'final_report.issue': 'final_report.issued',
   'compliance.complete': 'compliance.task_completed',
   'training.held': 'training.session_held',
+  'interface.test': 'specialty.interface_tested',
 };
 export const EVENT_NAMES = [...new Set(Object.values(WEBHOOK_EVENTS))].sort();
 

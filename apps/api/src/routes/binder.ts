@@ -7,6 +7,7 @@ import { isTenantAdmin, requirePermission, tenantTx } from '../http.js';
 import { approvalOf } from './icra.js';
 import { lifeSafetyItems, pfiItems } from './lifesafety.js';
 import { zoneState } from './medgas.js';
+import { specialtyState } from './specialty.js';
 import { reportShell } from './reports.js';
 
 const uuid = z.string().uuid();
@@ -198,6 +199,25 @@ export async function buildBinder(tx: Tx, projectId: string, tenantId: string, i
     });
   }
 
+  // 6b. Specialty systems (nurse call, pneumatic tube, RTLS, imaging) ------------------
+  {
+    const sp = await specialtyState(tx, projectId);
+    const gaps: Gap[] = [];
+    for (const s of sp.systems) {
+      for (const i of s.interfaces) {
+        if (i.latest?.result === 'fail') gaps.push({ severity: i.lifeSafety ? 'life_safety' : 'regulatory', text: `${s.name}: ${i.label} failed its interface test` });
+        else if (!i.latest && i.lifeSafety) gaps.push({ severity: 'life_safety', text: `${s.name}: ${i.label} has not been tested` });
+      }
+    }
+    if (sp.systems.length) {
+      sections.push({
+        key: 'specialty', title: 'Specialty systems (nurse call, pneumatic tube, RTLS, imaging)', status: sectionStatus(sp.systems, gaps), gaps,
+        summary: `${plural(sp.systems.length, 'system')}, ${sp.summary.passed} of ${sp.summary.interfaces} interfaces passed`,
+        records: sp.systems.map((s) => ({ name: s.name, type: s.label, passed: s.readiness.passed, total: s.readiness.total, failed: s.readiness.failed })),
+      });
+    }
+  }
+
   // 7. Open issues ------------------------------------------------------------------
   const issues = (await tx.query<{ number: number; title: string; priority: string; life_safety: boolean; status: string; created_at: Date; org: string | null }>(
     `SELECT i.number, i.title, i.priority, i.life_safety, i.status, i.created_at, o.name AS org
@@ -272,6 +292,7 @@ const RECORD_TABLES: Record<string, (rs: Rec[]) => string> = {
   ilsm: (rs) => table(['Deficiency', 'Location', 'Status', 'Measures documented', 'Patrols', 'Fire watch gaps', 'Identified'], rs.map((r) => [`<span class="ls">⚑</span> ${esc(r.deficiency)}`, esc(r.location), chip(String(r.status)), esc(r.measuresDocumented), esc(r.patrols), esc(r.fireWatchGaps), fmt(r.identifiedAt)])),
   medgas: (rs) => table(['Zone', 'Valve', 'Gases', 'Outlets', 'Tests passed', 'Certification'], rs.map((r) => [esc(r.name), esc(r.valveTag), esc(r.gases), esc(r.outlets), `${esc(r.passed)}/${esc(r.required)}`, `${chip(String(r.certification))}${r.certifiedBy ? ` ${esc(r.certifiedBy)}, ${fmt(r.certifiedAt)}` : ''}`])),
   lifesafety: (rs) => table(['Category', 'Items', 'Current', 'Due soon', 'Overdue', 'Failed', 'Never inspected'], rs.map((r) => [esc(r.group), esc(r.total), esc(r.current), esc(r.dueSoon), esc(r.overdue), Number(r.failed) ? `<span class="ls">⚑</span> ${esc(r.failed)}` : '0', esc(r.neverInspected)])),
+  specialty: (rs) => table(['System', 'Type', 'Interfaces passed', 'Failed'], rs.map((r) => [esc(r.name), esc(r.type), `${esc(r.passed)}/${esc(r.total)}`, Number(r.failed) ? `<span class="ls">⚑</span> ${esc(r.failed)}` : '0'])),
   issues: (rs) => table(['#', 'Issue', 'Priority', 'Status', 'Ball in court', 'Opened'], rs.map((r) => [esc(r.number), `${r.lifeSafety ? '<span class="ls">⚑ Life safety</span> ' : ''}${esc(r.title)}`, esc(r.priority), chip(String(r.status)), esc(r.ballInCourt ?? '—'), fmt(r.opened)])),
   integrity: () => '',
 };

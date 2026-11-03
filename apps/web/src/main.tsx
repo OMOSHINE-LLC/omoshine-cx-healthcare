@@ -20,6 +20,7 @@ import { LifeSafetyPage } from './pages/LifeSafety';
 import { ActivationPage } from './pages/Activation';
 import { TurnoverPage } from './pages/Turnover';
 import { OperationsPage } from './pages/Operations';
+import { SpecialtyPage } from './pages/Specialty';
 
 function ProjectNav() {
   const { projectId } = useParams();
@@ -36,6 +37,7 @@ function ProjectNav() {
       <NavLink to={`${base}/ilsm`}>Interim life safety</NavLink>
       <NavLink to={`${base}/life-safety`}>Life safety</NavLink>
       <NavLink to={`${base}/medgas`}>Medical gas</NavLink>
+      <NavLink to={`${base}/specialty`}>Specialty systems</NavLink>
       <NavLink to={`${base}/binder`}>Survey binder</NavLink>
       <NavLink to={`${base}/activation`}>Occupancy and activation</NavLink>
       <NavLink to={`${base}/turnover`}>Turnover and final report</NavLink>
@@ -79,6 +81,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
                 <Route path="activation" element={<ActivationPage />} />
                 <Route path="turnover" element={<TurnoverPage />} />
                 <Route path="operations" element={<OperationsPage />} />
+                <Route path="specialty" element={<SpecialtyPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />
                 <Route path="data-exchange" element={<DataExchangePage />} />
               </Routes>

@@ -32,6 +32,9 @@ const BY_DISCIPLINE: Record<string, TurnoverKind[]> = {
   fire_alarm: ['acceptance_test_report', 'certificate', 'sequence_of_operations'],
   medical_gas: ['certificate'],
   controls: ['sequence_of_operations'],
+  communications: ['acceptance_test_report', 'sequence_of_operations'],
+  conveying: ['acceptance_test_report', 'spare_parts'],
+  medical_equipment: ['acceptance_test_report', 'certificate'],
 };
 
 export const TURNOVER_VERIFIED = false;

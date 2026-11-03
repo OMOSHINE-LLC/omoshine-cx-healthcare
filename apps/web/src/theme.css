@@ -75,7 +75,7 @@ label.row input[type=checkbox] { width: auto; }
 button[aria-pressed='true'] { background: var(--navy); color: var(--ivory); }
 button[aria-pressed='true']:disabled { opacity: 0.85; }
 
-.chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+.chip { display: inline-block; white-space: nowrap; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
 .chip-pass { background: var(--pass-bg); color: var(--pass-fg); }
 .chip-fail { background: var(--fail-bg); color: var(--fail-fg); }
 .chip-open { background: var(--open-bg); color: var(--open-fg); }

@@ -11,3 +11,4 @@ export * from './library/lifesafety.js';
 export * from './library/activation.js';
 export * from './library/turnover.js';
 export * from './library/compliance.js';
+export * from './library/specialty.js';
