@@ -18,7 +18,7 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
 | --- | --- |
 | `packages/rules` | Code-requirement library (ASHRAE 170, NFPA 99/110, USP 797/800), state profiles (CA, NY, FL, TX), overlay engine and pure compliance evaluators. |
 | `apps/api` | Fastify + PostgreSQL REST API (`/api/v1`). Row-level security per tenant, role and scope based access, e-signatures with step-up re-authentication, hash-chained audit log, TAB CSV import, branded HTML reports. |
-| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log, ILSM / fire watch, medical gas verification and survey binder screens. |
+| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log, ILSM / fire watch, medical gas verification, life safety and survey binder screens. |
 
 ### Phase 2: infection control and interim life safety
 
@@ -36,14 +36,22 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   gas; function, pressure and flow, and concentration per outlet. Only the medical gas verifier records results, with
   their credential; results are append-only and a failure opens a critical life safety issue. The verifier certifies
   the zone with an e-signature once every latest result passes, and a new outlet or retest requires recertification.
+- **Life safety (NFPA 80, 105, 101, 72).** Inventory of fire, smoke and combination dampers, fire and smoke barrier
+  doors, and fire alarm devices, added one at a time or as a batch (existing tags are skipped). Each type has a fill-in
+  inspection checklist (Yes, No or N/A on every item). Due dates follow the hospital's life safety policy: dampers within
+  1 year of installation then every 6 years, doors and most devices annually, waterflow and tamper switches every 6
+  months, with a 30-day "due soon" window. Inspections are append-only; a failure opens a high-priority life safety
+  issue and keeps the item failed until a passing inspection. The Statement of Conditions plan-for-improvement list
+  numbers each deficiency, flags items past their planned completion, and locks an item once it is resolved with a
+  description of the correction. A branded life safety report covers both.
 - **Survey binder.** One page and one printable, branded report that gathers the evidence a surveyor or AHJ asks
   for: room ventilation compliance, signed checklists and tests, essential electrical, ICRA, ILSM and fire watch,
-  medical gas certification, open issues, and record integrity (signature count and, for administrators, an audit
+  medical gas certification, life safety inspections and the Statement of Conditions, open issues, and record integrity (signature count and, for administrators, an audit
   chain check). It lists the gaps to close before the survey, life safety first. Generating the report is audited.
 - **Integrations: API keys and webhooks.** A tenant administrator creates API keys for other systems. Each key acts
   as a service user with one role on one project, is stored only as a SHA-256 hash, can be revoked, and can never
   e-sign. Webhooks send signed JSON events (`x-omoshine-signature: t=…,v1=HMAC-SHA256`) for issues, tests, room
-  measurements, EES, ICRA, ILSM, medical gas and binders. Events are written to an outbox in the same transaction as
+  measurements, EES, ICRA, ILSM, medical gas, life safety inspections, plan-for-improvement items and binders. Events are written to an outbox in the same transaction as
   the change and delivered by a dispatcher with exponential back-off; targets must be public https endpoints
   (`WEBHOOK_ALLOW_INSECURE=1` relaxes this for local development only).
 - **BAS trend import.** CSV of `timestamp, room_number, point, value`. Every reading is checked against the room's
@@ -56,7 +64,8 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   (`OMOSHINE_SECRETS_KEY`) and never returned. Base URLs are limited to the providers' API hosts. The payloads follow
   the providers' public REST documentation and **must be confirmed against a sandbox account** before go-live;
   OAuth token refresh is not automated yet (paste a fresh token with `PATCH /connections/:id`).
-- The ICRA matrix, control list, ILSM measures, fire watch thresholds and medical gas limits are seeded as
+- The ICRA matrix, control list, ILSM measures, fire watch thresholds, medical gas limits and life safety
+  inspection intervals and checklists are seeded as
   `verified: false` until the consultant review confirms them.
 
 ## Running locally

@@ -14,6 +14,7 @@ import { MedGasPage } from './pages/MedGas';
 import { SurveyBinderPage } from './pages/SurveyBinder';
 import { IntegrationsPage } from './pages/Integrations';
 import { DataExchangePage } from './pages/DataExchange';
+import { LifeSafetyPage } from './pages/LifeSafety';
 
 function ProjectNav() {
   const { projectId } = useParams();
@@ -28,6 +29,7 @@ function ProjectNav() {
       <NavLink to={`${base}/tests`}>Checklists and tests</NavLink>
       <NavLink to={`${base}/icra`}>Infection control (ICRA)</NavLink>
       <NavLink to={`${base}/ilsm`}>Interim life safety</NavLink>
+      <NavLink to={`${base}/life-safety`}>Life safety</NavLink>
       <NavLink to={`${base}/medgas`}>Medical gas</NavLink>
       <NavLink to={`${base}/binder`}>Survey binder</NavLink>
       <NavLink to={`${base}/data-exchange`}>Data exchange</NavLink>
@@ -62,6 +64,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
                 <Route path="issues" element={<IssuesPage />} />
                 <Route path="icra" element={<IcraPage />} />
                 <Route path="ilsm" element={<IlsmPage />} />
+                <Route path="life-safety" element={<LifeSafetyPage />} />
                 <Route path="medgas" element={<MedGasPage />} />
                 <Route path="binder" element={<SurveyBinderPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />

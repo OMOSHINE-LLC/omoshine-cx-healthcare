@@ -14,7 +14,7 @@ const sectionOf = (b: { sections: { key: string }[] }, key: string) => b.section
 describe('survey binder', () => {
   it('lists gaps for unmeasured rooms and untested electrical equipment', async () => {
     const b = expectStatus(await w.as.cxa.get(`/projects/${w.ids.project}/survey-binder`), 200);
-    expect(b.sections.map((s: { key: string }) => s.key)).toEqual(['rooms', 'tests', 'ees', 'icra', 'ilsm', 'medgas', 'issues', 'integrity']);
+    expect(b.sections.map((s: { key: string }) => s.key)).toEqual(['rooms', 'tests', 'ees', 'icra', 'ilsm', 'medgas', 'lifesafety', 'issues', 'integrity']);
     const rooms = sectionOf(b, 'rooms');
     expect(rooms.status).toBe('attention');
     expect(rooms.gaps.map((g) => g.text)).toContain('OR-04 has no ventilation measurements');
@@ -41,6 +41,22 @@ describe('survey binder', () => {
     const firstOther = b.gaps.findIndex((g: { severity: string }) => g.severity !== 'life_safety');
     expect(b.gaps.slice(firstOther).every((g: { severity: string }) => g.severity !== 'life_safety')).toBe(true);
     expect(b.summary.lifeSafetyGaps).toBeGreaterThanOrEqual(4);
+  });
+
+  it('reports overdue and failed life safety items and late plan-for-improvement items', async () => {
+    expect(sectionOf(expectStatus(await w.as.cxa.get(`/projects/${w.ids.project}/survey-binder`), 200), 'lifesafety').status).toBe('no_records');
+    await w.as.cxa.post(`/projects/${w.ids.project}/ls-items`, { items: [
+      { kind: 'fire_damper', tag: 'FD-B-1', installedOn: '2020-01-01' },
+      { kind: 'fire_door', tag: 'D-B-1' },
+    ] });
+    await w.as.safety.post(`/projects/${w.ids.project}/pfi`, { deficiency: 'Smoke barrier penetration', location: 'Corridor 2C', plannedCompletion: '2026-01-01' });
+    const b = expectStatus(await w.as.cxa.get(`/projects/${w.ids.project}/survey-binder`), 200);
+    const ls = sectionOf(b, 'lifesafety');
+    expect(ls.status).toBe('attention');
+    expect(ls.gaps).toContainEqual({ severity: 'life_safety', text: 'Fire and smoke dampers: 1 item overdue for inspection (FD-B-1)' });
+    expect(ls.gaps).toContainEqual({ severity: 'regulatory', text: 'Plan-for-improvement item 1 (Smoke barrier penetration) is past its planned completion of 2026-01-01' });
+    expect(ls.records).toHaveLength(2);
+    expect(ls.summary).toBe('2 items, 0 current; 1 open PFI item');
   });
 
   it('a passing room shows as a passing record', async () => {

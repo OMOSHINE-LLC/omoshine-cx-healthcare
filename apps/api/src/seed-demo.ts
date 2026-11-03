@@ -12,8 +12,8 @@ const db = createPool();
 const app = await buildApp({ db });
 const t = await seedTenant(config.adminDatabaseUrl, `demo${Date.now().toString(36)}`, '2468');
 
-async function call(token: string, method: 'POST' | 'PUT', url: string, payload: unknown) {
-  const r = await app.inject({ method, url: `/api/v1${url}`, payload: payload as object, headers: { authorization: `Bearer ${token}` } });
+async function call(token: string, method: 'GET' | 'POST' | 'PUT', url: string, payload?: unknown) {
+  const r = await app.inject({ method, url: `/api/v1${url}`, ...(payload === undefined ? {} : { payload: payload as object }), headers: { authorization: `Bearer ${token}` } });
   if (r.statusCode >= 300) throw new Error(`${method} ${url} → ${r.statusCode} ${r.body}`);
   return r.json();
 }
@@ -101,6 +101,24 @@ for (const gas of ['oxygen', 'medical_air', 'vacuum']) {
   await call(verifier, 'POST', `/medgas-zones/${mg.id}/tests`, { testType: 'standing_pressure', gas, readings: { durationHours: 24, leakFound: false }, ...cred });
 }
 await call(verifier, 'POST', `/medgas-zones/${mg.id}/tests`, { testType: 'piping_purity', gas: 'oxygen', readings: { dewPointF: 61, hydrocarbonDeltaPpm: 1 }, notes: 'Moisture in branch; purge and retest', ...cred });
+
+// Life safety: a few dampers, doors and devices, one failed door, and a PFI item.
+const yearsAgo = (y: number) => { const d = new Date(); d.setUTCFullYear(d.getUTCFullYear() - y); return d.toISOString().slice(0, 10); };
+await call(cxa, 'POST', `/projects/${project.id}/ls-items`, { items: [
+  { kind: 'fire_damper', tag: 'FD-2-01', location: 'Above corridor 2C ceiling, grid C/4', installedOn: yearsAgo(2) },
+  { kind: 'combination_damper', tag: 'FSD-2-02', location: 'Smoke barrier at corridor 2D', installedOn: yearsAgo(0) },
+  { kind: 'fire_door', tag: 'D-2-101', roomId: rooms['OR-01']!.id, location: 'Corridor door to OR-01', ratingMinutes: 90 },
+  { kind: 'smoke_door', tag: 'D-2-150', location: 'Cross-corridor smoke barrier doors 2C', ratingMinutes: 20 },
+  { kind: 'smoke_detector', tag: 'SD-2-001', location: 'Corridor 2C' },
+  { kind: 'waterflow_switch', tag: 'WF-2', location: 'Riser 2, Level 2 floor control' },
+] });
+const lsList = await call(cxa, 'GET', `/projects/${project.id}/ls-items`);
+const lsTag = (tag: string) => lsList.items.find((i: { tag: string }) => i.tag === tag).id;
+const catalog = await call(cxa, 'GET', '/life-safety/catalog');
+const yes = (kind: string) => Object.fromEntries(catalog.kinds[kind].items.map((i: { key: string }) => [i.key, true]));
+await call(cxa, 'POST', `/ls-items/${lsTag('SD-2-001')}/inspections`, { answers: yes('smoke_detector') });
+await call(gc, 'POST', `/ls-items/${lsTag('D-2-101')}/inspections`, { answers: { ...yes('fire_door'), latches: false }, notes: 'Latch bolt does not engage the strike' });
+await call(safety, 'POST', `/projects/${project.id}/pfi`, { deficiency: 'Unsealed penetrations in 1-hour smoke barrier above corridor 2C ceiling', codeReference: 'NFPA 101 8.5.6', location: 'Level 2, corridor 2C', plannedCompletion: new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10) });
 
 console.log('\nDemo seeded. Sign in at http://localhost:5173 with PIN 2468 as:');
 for (const [k, u] of Object.entries(t.users)) console.log(`  ${k.padEnd(9)} ${u.email}`);
