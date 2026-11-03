@@ -18,7 +18,7 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
 | --- | --- |
 | `packages/rules` | Code-requirement library (ASHRAE 170, NFPA 99/110, USP 797/800), state profiles (CA, NY, FL, TX), overlay engine and pure compliance evaluators. |
 | `apps/api` | Fastify + PostgreSQL REST API (`/api/v1`). Row-level security per tenant, role and scope based access, e-signatures with step-up re-authentication, hash-chained audit log, TAB CSV import, branded HTML reports. |
-| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log, ILSM / fire watch, medical gas verification, life safety and survey binder screens. |
+| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log, ILSM / fire watch, medical gas verification, life safety, occupancy and activation, and survey binder screens. |
 
 ### Phase 2: infection control and interim life safety
 
@@ -44,6 +44,15 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   issue and keeps the item failed until a passing inspection. The Statement of Conditions plan-for-improvement list
   numbers each deficiency, flags items past their planned completion, and locks an item once it is resolved with a
   description of the correction. A branded life safety report covers both.
+- **Phased occupancy and activation.** Each phase gets an activation checklist when it is created: common items (AHJ
+  final and certificate of occupancy, fire marshal acceptance, accreditor notice, ICRA close-out, water flushing,
+  final air balance, staff training and orientation, equipment, nurse call and IT) plus the state agency items for CA
+  (HCAI, CDPH), NY (NYSDOH), FL (AHCA) and TX (HHSC). Items are done with evidence or not applicable with a reason;
+  projects can add their own. Evidence gates read the records for the phase's rooms: ventilation, functional tests,
+  medical gas certification, life safety inspections and open life safety issues. The CxA or owner signs the phase
+  ready (e-signature with re-authentication) only when every gate passes; the owner then records occupancy, which
+  locks the phase and its checklist. A phase signed ready whose evidence later fails shows as lapsed. A branded
+  activation report covers gates, checklist and sign-offs.
 - **Survey binder.** One page and one printable, branded report that gathers the evidence a surveyor or AHJ asks
   for: room ventilation compliance, signed checklists and tests, essential electrical, ICRA, ILSM and fire watch,
   medical gas certification, life safety inspections and the Statement of Conditions, open issues, and record integrity (signature count and, for administrators, an audit
@@ -65,7 +74,8 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   the providers' public REST documentation and **must be confirmed against a sandbox account** before go-live;
   OAuth token refresh is not automated yet (paste a fresh token with `PATCH /connections/:id`).
 - The ICRA matrix, control list, ILSM measures, fire watch thresholds, medical gas limits and life safety
-  inspection intervals and checklists are seeded as
+  inspection intervals and checklists, and the activation
+  checklist, are seeded as
   `verified: false` until the consultant review confirms them.
 
 ## Running locally

@@ -15,6 +15,7 @@ import { SurveyBinderPage } from './pages/SurveyBinder';
 import { IntegrationsPage } from './pages/Integrations';
 import { DataExchangePage } from './pages/DataExchange';
 import { LifeSafetyPage } from './pages/LifeSafety';
+import { ActivationPage } from './pages/Activation';
 
 function ProjectNav() {
   const { projectId } = useParams();
@@ -32,6 +33,7 @@ function ProjectNav() {
       <NavLink to={`${base}/life-safety`}>Life safety</NavLink>
       <NavLink to={`${base}/medgas`}>Medical gas</NavLink>
       <NavLink to={`${base}/binder`}>Survey binder</NavLink>
+      <NavLink to={`${base}/activation`}>Occupancy and activation</NavLink>
       <NavLink to={`${base}/data-exchange`}>Data exchange</NavLink>
       <NavLink to={`${base}/integrations`}>Integrations</NavLink>
       <NavLink to={`${base}/issues`}>Issues</NavLink>
@@ -67,6 +69,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
                 <Route path="life-safety" element={<LifeSafetyPage />} />
                 <Route path="medgas" element={<MedGasPage />} />
                 <Route path="binder" element={<SurveyBinderPage />} />
+                <Route path="activation" element={<ActivationPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />
                 <Route path="data-exchange" element={<DataExchangePage />} />
               </Routes>
