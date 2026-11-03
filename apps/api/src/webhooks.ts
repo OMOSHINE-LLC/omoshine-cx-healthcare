@@ -30,6 +30,9 @@ export const WEBHOOK_EVENTS: Record<string, string> = {
   'pfi.resolve': 'soc.pfi_resolved',
   'phase.ready': 'phase.signed_ready',
   'phase.occupied': 'phase.occupied',
+  'turnover.accept': 'turnover.document_accepted',
+  'turnover.reject': 'turnover.document_rejected',
+  'final_report.issue': 'final_report.issued',
 };
 export const EVENT_NAMES = [...new Set(Object.values(WEBHOOK_EVENTS))].sort();
 
@@ -46,6 +49,7 @@ const PROJECT_OF: Record<string, string> = {
   ls_item: 'SELECT project_id FROM ls_item WHERE id = $1',
   pfi_item: 'SELECT project_id FROM pfi_item WHERE id = $1',
   phase: 'SELECT project_id FROM phase WHERE id = $1',
+  turnover_document: 'SELECT project_id FROM turnover_document WHERE id = $1',
   activation_item: 'SELECT ph.project_id FROM activation_item a JOIN phase ph ON ph.id = a.phase_id WHERE a.id = $1',
   asset: 'SELECT s.project_id FROM asset a JOIN system s ON s.id = a.system_id WHERE a.id = $1',
 };

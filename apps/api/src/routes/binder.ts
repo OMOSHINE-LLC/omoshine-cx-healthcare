@@ -218,7 +218,9 @@ export async function buildBinder(tx: Tx, projectId: string, tenantId: string, i
     `SELECT count(*) AS n FROM signature s WHERE
        (s.record_type = 'test_run' AND s.record_id IN (SELECT id FROM test_run WHERE project_id = $1)) OR
        (s.record_type = 'icra_zone' AND s.record_id IN (SELECT id FROM icra_zone WHERE project_id = $1)) OR
-       (s.record_type = 'medgas_zone' AND s.record_id IN (SELECT id FROM medgas_zone WHERE project_id = $1))`, [projectId])).rows[0]!.n);
+       (s.record_type = 'medgas_zone' AND s.record_id IN (SELECT id FROM medgas_zone WHERE project_id = $1)) OR
+       (s.record_type = 'phase' AND s.record_id IN (SELECT id FROM phase WHERE project_id = $1)) OR
+       (s.record_type = 'final_report' AND s.record_id IN (SELECT id FROM final_report WHERE project_id = $1))`, [projectId])).rows[0]!.n);
   const chain = includeAuditCheck ? await verifyAuditChain(tx, tenantId) : null;
   sections.push({
     key: 'integrity', title: 'Record integrity', status: chain && !chain.ok ? 'attention' : 'ready',

@@ -63,7 +63,7 @@ const csv = [
 await call(tab, 'POST', `/projects/${project.id}/imports/tab`, { csv });
 
 const ees = await call(cxa, 'POST', `/projects/${project.id}/systems`, { name: 'Essential Electrical System', discipline: 'electrical', systemType: 'ees_type1' });
-await call(cxa, 'POST', `/projects/${project.id}/systems`, { name: 'AHU-1 Surgery', systemType: 'hvac' });
+const ahu1 = await call(cxa, 'POST', `/projects/${project.id}/systems`, { name: 'AHU-1 Surgery', systemType: 'hvac' });
 for (const [tag, branch, panel] of [['ATS-LS-1', 'life_safety', 'LS-2A'], ['ATS-CR-1', 'critical', 'CR-2A'], ['ATS-CR-2', 'critical', 'CR-4A'], ['ATS-EQ-1', 'equipment', 'EQ-2A']]) {
   const a = await call(cxa, 'POST', `/systems/${ees.id}/assets`, { tag, assetType: 'ats', attributes: { branch, served_panel: panel } });
   if (tag !== 'ATS-EQ-1') await call(cxa, 'POST', `/assets/${a.id}/ats-tests`, { transferTimeS: tag === 'ATS-CR-2' ? 11.4 : 7.8 });
@@ -126,6 +126,13 @@ const actItem = (key: string) => act.items.find((i: { key: string }) => i.key ==
 await call(cxa, 'PATCH', `/activation-items/${actItem('accreditor_notice')}`, { status: 'done', evidence: 'Notification letter sent to accreditor; confirmation on file' });
 await call(cxa, 'PATCH', `/activation-items/${actItem('air_balance_final')}`, { status: 'done', evidence: 'TAB final report rev 2 accepted by CxA' });
 await call(cxa, 'PATCH', `/activation-items/${actItem('move_plan')}`, { status: 'na', evidence: 'New service line; no patients transfer from existing units' });
+
+// Turnover: AHU-1 documents in various states.
+const om = await call(gc, 'POST', `/systems/${ahu1.id}/turnover-documents`, { kind: 'om_manual', title: 'AHU-1 O&M manual rev B', reference: 'Closeout/Mechanical/AHU-1/OM-revB.pdf' });
+await call(cxa, 'POST', `/turnover-documents/${om.id}/review`, { decision: 'accepted' });
+const ab = await call(gc, 'POST', `/systems/${ahu1.id}/turnover-documents`, { kind: 'as_built', title: 'Mechanical as-builts, levels 2 and 4', reference: 'Closeout/Mechanical/AsBuilts/' });
+await call(cxa, 'POST', `/turnover-documents/${ab.id}/review`, { decision: 'rejected', note: 'Level 4 duct routing not updated after RFI 112' });
+await call(gc, 'POST', `/systems/${ahu1.id}/turnover-documents`, { kind: 'warranty', title: 'AHU-1 manufacturer warranty', reference: 'Closeout/Mechanical/AHU-1/Warranty.pdf', warrantyStart: new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10), warrantyMonths: 24 });
 
 console.log('\nDemo seeded. Sign in at http://localhost:5173 with PIN 2468 as:');
 for (const [k, u] of Object.entries(t.users)) console.log(`  ${k.padEnd(9)} ${u.email}`);
