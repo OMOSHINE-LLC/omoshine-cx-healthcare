@@ -19,6 +19,7 @@ import { icraRoutes } from './routes/icra.js';
 import { medgasRoutes } from './routes/medgas.js';
 import { binderRoutes } from './routes/binder.js';
 import { API_KEY_PATTERN, integrationRoutes } from './routes/integrations.js';
+import { connectorRoutes } from './routes/connectors.js';
 import { sha256 } from './crypto.js';
 import { timingSafeEqual } from 'node:crypto';
 
@@ -40,7 +41,7 @@ async function principalForApiKey(db: Db, token: string): Promise<Principal> {
   return { userId: row.user_id, tenantId: row.tenant_id, name: row.user_name };
 }
 
-export async function buildApp(opts: { db: Db; logger?: boolean }): Promise<FastifyInstance> {
+export async function buildApp(opts: { db: Db; logger?: boolean; fetchImpl?: typeof fetch }): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? false, bodyLimit: 10 * 1024 * 1024 });
   await app.register(cors, { origin: true });
 
@@ -90,6 +91,7 @@ export async function buildApp(opts: { db: Db; logger?: boolean }): Promise<Fast
     await medgasRoutes(api, opts.db);
     await binderRoutes(api, opts.db);
     await integrationRoutes(api, opts.db);
+    await connectorRoutes(api, opts.db, () => opts.fetchImpl ?? fetch);
   }, { prefix: '/api/v1' });
 
   return app;
