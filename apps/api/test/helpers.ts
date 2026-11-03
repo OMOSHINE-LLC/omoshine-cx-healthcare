@@ -8,7 +8,7 @@ export interface Res<T = any> { status: number; body: T; text: string }
 
 export class Client {
   constructor(private app: FastifyInstance, public token?: string) {}
-  async req<T = any>(method: 'GET' | 'POST' | 'PUT' | 'PATCH', url: string, payload?: unknown, headers: Record<string, string> = {}): Promise<Res<T>> {
+  async req<T = any>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, payload?: unknown, headers: Record<string, string> = {}): Promise<Res<T>> {
     const r = await this.app.inject({
       method,
       url: url.startsWith('/') && !url.startsWith('/api') && !url.startsWith('/brand') ? `/api/v1${url}` : url,
@@ -23,6 +23,7 @@ export class Client {
   post<T = any>(url: string, payload?: unknown, headers?: Record<string, string>) { return this.req<T>('POST', url, payload ?? {}, headers); }
   put<T = any>(url: string, payload?: unknown) { return this.req<T>('PUT', url, payload ?? {}); }
   patch<T = any>(url: string, payload?: unknown) { return this.req<T>('PATCH', url, payload ?? {}); }
+  del<T = any>(url: string) { return this.req<T>('DELETE', url); }
 }
 
 export interface World {

@@ -1,5 +1,6 @@
 import { canonicalJson, sha256 } from './crypto.js';
 import type { Tx } from './db.js';
+import { enqueueWebhooks } from './webhooks.js';
 
 export const GENESIS_HASH = '0'.repeat(64);
 
@@ -35,6 +36,7 @@ export async function appendAudit(tx: Tx, tenantId: string, e: AuditEntry): Prom
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
     [tenantId, e.actorId, e.action, e.entityType, e.entityId, JSON.stringify(data), at, prevHash, hash],
   );
+  await enqueueWebhooks(tx, tenantId, e, data, at);
   return hash;
 }
 
