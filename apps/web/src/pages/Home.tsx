@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, setToken } from '../api';
 import { LifeSafetyFlag, Loading, Progress, useApi } from '../components';
+import { SSO_CALLBACK_PATH } from '../reauth';
 
 export function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState('');
@@ -21,14 +22,19 @@ export function LoginPage({ onLogin }: { onLogin: () => void }) {
         <img src="/omoshine-logo.png" alt="OMOSHINE logo" />
         <h1>OMOSHINE CX Planner</h1>
         <p className="muted" style={{ marginTop: -8 }}>Healthcare Edition</p>
-        <button type="button" className="primary" style={{ width: '100%', marginBottom: 16 }} disabled title="Configured per hospital in production">
-          Sign in with your organization (SSO)
-        </button>
         <div style={{ display: 'grid', gap: 12, textAlign: 'left' }}>
-          <label>Email<input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          <label>Work email<input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          <button type="button" className="primary" disabled={!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)} onClick={async () => {
+            setErr(null);
+            try {
+              const r = await api<{ authorizationUrl: string }>('/auth/sso/start', { body: { email, redirectUri: `${location.origin}${SSO_CALLBACK_PATH}` } });
+              location.assign(r.authorizationUrl);
+            } catch (x) { setErr((x as Error).message); }
+          }}>Sign in with your organization (SSO)</button>
+          <p className="muted" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>or, where your organization allows it, with your PIN</p>
           <label>PIN<input type="password" autoComplete="current-password" required value={pin} onChange={(e) => setPin(e.target.value)} /></label>
           {err && <p className="error" role="alert">{err}</p>}
-          <button className="primary" type="submit">Sign in</button>
+          <button type="submit">Sign in with PIN</button>
         </div>
       </form>
     </div>

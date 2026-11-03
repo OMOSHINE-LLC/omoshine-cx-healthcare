@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, openReport } from '../api';
 import { LifeSafetyFlag, Loading, fmtDate, useApi } from '../components';
+import { ReauthForm } from '../reauth';
 
 type PhaseStatus = 'planned' | 'active' | 'ready' | 'occupied';
 export interface Gate { key: string; label: string; status: 'pass' | 'fail' | 'not_applicable'; detail: string }
@@ -91,24 +92,16 @@ export function ChecklistItem({ item, locked, onChange }: { item: ActivationItem
   );
 }
 
-function PinDialog({ title, text, onSign, onClose, withDate }: { title: string; text: string; withDate?: boolean; onSign: (pin: string, date?: string) => Promise<void>; onClose: () => void }) {
+function PinDialog({ title, text, onSign, onClose, withDate }: { title: string; text: string; withDate?: boolean; onSign: (reauthToken: string, date?: string) => Promise<void>; onClose: () => void }) {
   const today = new Date().toISOString().slice(0, 10);
-  const [pin, setPin] = useState('');
   const [date, setDate] = useState(today);
-  const [err, setErr] = useState<string | null>(null);
   return (
     <div className="dialog-backdrop" role="dialog" aria-modal="true" aria-labelledby="pin-title">
-      <form className="dialog" onSubmit={async (e) => { e.preventDefault(); try { await onSign(pin, withDate ? date : undefined); } catch (x) { setErr((x as Error).message); } }}>
+      <ReauthForm onClose={onClose} onToken={(token) => onSign(token, withDate ? date : undefined)}>
         <h2 id="pin-title">{title}</h2>
         <p className="muted">{text}</p>
         {withDate && <label>Occupied on<input type="date" required max={today} value={date} onChange={(e) => setDate(e.target.value)} /></label>}
-        <label style={{ marginTop: 8 }}>Re-enter your signing PIN<input type="password" autoComplete="off" required minLength={4} value={pin} onChange={(e) => setPin(e.target.value)} /></label>
-        {err && <p className="error" role="alert">{err}</p>}
-        <div className="row" style={{ marginTop: 12 }}>
-          <button className="primary" type="submit">Sign</button>
-          <button type="button" onClick={onClose}>Cancel</button>
-        </div>
-      </form>
+      </ReauthForm>
     </div>
   );
 }
@@ -190,8 +183,7 @@ function PhaseView({ id, onChanged }: { id: string; onChanged: () => void }) {
                 : 'Recording occupancy closes the phase. Its checklist and sign-offs can no longer change.'}
               withDate={signing === 'occupied'}
               onClose={() => setSigning(null)}
-              onSign={async (pin, date) => {
-                const { reauthToken } = await api<{ reauthToken: string }>('/auth/reauth', { body: { pin } });
+              onSign={async (reauthToken, date) => {
                 await api(`/phases/${id}/signoff`, { body: { kind: signing, ...(date ? { occupiedOn: date } : {}) }, headers: { 'x-reauth-token': reauthToken } });
                 setMsg(signing === 'ready' ? 'Phase signed ready to occupy.' : 'Occupancy recorded. The phase is now closed.');
                 setSigning(null);

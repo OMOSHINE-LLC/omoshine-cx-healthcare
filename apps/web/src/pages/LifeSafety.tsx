@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api, openReport } from '../api';
+import { OFFLINE_SAVED, api, isQueued, openReport, type QueuedOffline } from '../api';
 import { LifeSafetyFlag, Loading, useApi } from '../components';
 
 type Group = 'damper' | 'door' | 'fire_alarm';
@@ -189,8 +189,9 @@ export function LifeSafetyPage() {
         {list.data && <LsSummaryCards summary={list.data.summary} />}
         {inspecting && kinds[inspecting.kind] && (
           <InspectionForm item={inspecting} def={kinds[inspecting.kind]!} onCancel={() => setInspecting(null)} onSubmit={async (body) => {
-            const r = await api<{ evaluation: { overall: string }; issueId: string | null }>(`/ls-items/${inspecting.id}/inspections`, { body });
-            setMsg(r.evaluation.overall === 'fail'
+            const r = await api<{ evaluation: { overall: string }; issueId: string | null } | QueuedOffline>(`/ls-items/${inspecting.id}/inspections`, { body });
+            if (isQueued(r)) setMsg(`${inspecting.tag}: ${OFFLINE_SAVED}`);
+            else setMsg(r.evaluation.overall === 'fail'
               ? `${inspecting.tag} FAILED. A high-priority life safety issue was opened.`
               : `${inspecting.tag}: inspection ${r.evaluation.overall === 'pass' ? 'passed' : 'saved as incomplete'}.`);
             setInspecting(null);

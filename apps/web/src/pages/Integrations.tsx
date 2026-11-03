@@ -155,6 +155,57 @@ export function IntegrationsPage() {
           </Loading>
         )}
       </div>
+      <SsoCard />
     </>
+  );
+}
+
+interface SsoConnection { id: string; name: string; issuer: string; client_id: string; email_domains: string[]; auto_provision: boolean; allow_pin_signing: boolean; active: boolean; hasClientSecret: boolean }
+
+/** Tenant administrators connect the hospital's identity provider (OpenID Connect). */
+export function SsoCard() {
+  const list = useApi<SsoConnection[]>('/sso-connections');
+  const [form, setForm] = useState({ name: '', issuer: '', clientId: '', clientSecret: '', domains: '', autoProvision: false, allowPinSigning: true });
+  const [err, setErr] = useState<string | null>(null);
+  const run = async (fn: () => Promise<unknown>) => { setErr(null); try { await fn(); list.reload(); } catch (x) { setErr((x as Error).message); } };
+  const patch = (c: SsoConnection, body: Record<string, unknown>) => run(() => api(`/sso-connections/${c.id}`, { method: 'PATCH', body }));
+  return (
+    <div className="card">
+      <h2>Single sign-on (OpenID Connect)</h2>
+      <p className="muted">People at these email domains sign in through your identity provider (for example Microsoft Entra ID, Okta or Ping). Register OMOSHINE there as a web application with the redirect URI <code>{location.origin}/sso/callback</code>. E-signatures can require a fresh sign-in at the identity provider instead of the signing PIN.</p>
+      {err && <p className="error" role="alert">{err}</p>}
+      <Loading error={list.error}>
+        {list.data && list.data.length > 0 && (
+          <table aria-label="SSO connections">
+            <thead><tr><th>Connection</th><th>Domains</th><th>New people</th><th>E-signatures</th><th>Status</th></tr></thead>
+            <tbody>
+              {list.data.map((c) => (
+                <tr key={c.id}>
+                  <td><strong>{c.name}</strong><div className="muted" style={{ fontSize: 12 }}>{c.issuer} · {c.client_id}{c.hasClientSecret ? ' · secret stored' : ''}</div></td>
+                  <td>{c.email_domains.join(', ')}</td>
+                  <td><label className="row" style={{ fontWeight: 400 }}><input type="checkbox" style={{ width: 'auto' }} checked={c.auto_provision} onChange={(e) => patch(c, { autoProvision: e.target.checked })} /> Create on first sign-in</label></td>
+                  <td><label className="row" style={{ fontWeight: 400 }}><input type="checkbox" style={{ width: 'auto' }} checked={!c.allow_pin_signing} onChange={(e) => patch(c, { allowPinSigning: !e.target.checked })} /> Require SSO to sign</label></td>
+                  <td><button onClick={() => patch(c, { active: !c.active })}>{c.active ? 'Turn off' : 'Turn on'}</button> <span className={`chip ${c.active ? 'chip-pass' : 'chip-closed'}`}>{c.active ? 'Active' : 'Off'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Loading>
+      <form className="form-grid" style={{ marginTop: 12 }} aria-label="Add SSO connection" onSubmit={(e) => { e.preventDefault(); run(async () => {
+        await api('/sso-connections', { body: {
+          name: form.name, issuer: form.issuer, clientId: form.clientId, ...(form.clientSecret ? { clientSecret: form.clientSecret } : {}),
+          emailDomains: form.domains.split(/[\s,]+/).filter(Boolean), autoProvision: form.autoProvision, allowPinSigning: form.allowPinSigning,
+        } });
+        setForm({ name: '', issuer: '', clientId: '', clientSecret: '', domains: '', autoProvision: false, allowPinSigning: true });
+      }); }}>
+        <label>Name<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Riverside Entra ID" /></label>
+        <label>Issuer URL<input required type="url" value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} placeholder="https://login.example.com/tenant/v2.0" /></label>
+        <label>Client ID<input required value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} /></label>
+        <label>Client secret (if required)<input type="password" autoComplete="off" value={form.clientSecret} onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} /></label>
+        <label>Email domains<input required value={form.domains} onChange={(e) => setForm({ ...form, domains: e.target.value })} placeholder="hospital.org, health.org" /></label>
+        <div style={{ alignSelf: 'end' }}><button className="primary" type="submit">Add connection</button></div>
+      </form>
+    </div>
   );
 }

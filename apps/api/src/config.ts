@@ -15,5 +15,9 @@ export const config = {
   secretsKey: process.env.OMOSHINE_SECRETS_KEY ?? '',
   /** Allow connector base URLs other than the providers' public hosts (tests and sandboxes). */
   connectorAllowAnyHost: process.env.CONNECTOR_ALLOW_ANY_HOST === '1',
+  /** Allow http OIDC issuers (local identity providers in development and tests only). */
+  ssoAllowInsecure: process.env.SSO_ALLOW_INSECURE === '1',
+  /** Public URL of the web app; SSO redirect URIs must start with it. */
+  webBaseUrl: process.env.WEB_BASE_URL ?? 'http://localhost:5173',
   webhookDispatcher: process.env.WEBHOOK_DISPATCHER !== 'off',
 };

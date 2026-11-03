@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '../api';
+import { OFFLINE_SAVED, isQueued, type QueuedOffline, api } from '../api';
 import { Loading, StatusChip, fmtDate, useApi } from '../components';
 import { SignDialog } from './TestRuns';
 
@@ -121,8 +121,9 @@ export function IcraPage() {
           controls={detail.data.controls}
           onCancel={() => setOpen(null)}
           onSubmit={async (body) => {
-            const r = await api<{ evaluation: { overall: string }; issueId: string | null }>(`/icra-zones/${open}/logs`, { body });
-            setMsg(r.evaluation.overall === 'fail' ? 'Inspection saved as FAILED. An issue was opened for follow-up.' : `Inspection saved: ${r.evaluation.overall}.`);
+            const r = await api<{ evaluation: { overall: string }; issueId: string | null } | QueuedOffline>(`/icra-zones/${open}/logs`, { body });
+            if (isQueued(r)) setMsg(OFFLINE_SAVED);
+            else setMsg(r.evaluation.overall === 'fail' ? 'Inspection saved as FAILED. An issue was opened for follow-up.' : `Inspection saved: ${r.evaluation.overall}.`);
             setOpen(null);
             zones.reload();
           }}
@@ -142,8 +143,7 @@ export function IcraPage() {
       {approving && (
         <SignDialog
           onClose={() => setApproving(null)}
-          onSign={async (pin) => {
-            const { reauthToken } = await api<{ reauthToken: string }>('/auth/reauth', { body: { pin } });
+          onSign={async (reauthToken) => {
             await api(`/icra-zones/${approving}/approve`, { body: {}, headers: { 'x-reauth-token': reauthToken } });
             setApproving(null);
             zones.reload();

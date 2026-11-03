@@ -211,8 +211,7 @@ function ZoneDetailView({ id, catalog, onChanged }: { id: string; catalog: Catal
           {certifying && (
             <SignDialog
               onClose={() => setCertifying(false)}
-              onSign={async (pin) => {
-                const { reauthToken } = await api<{ reauthToken: string }>('/auth/reauth', { body: { pin } });
+              onSign={async (reauthToken) => {
                 await api(`/medgas-zones/${id}/certify`, { body: {}, headers: { 'x-reauth-token': reauthToken } });
                 setCertifying(false);
                 setMsg('Zone certified.');
