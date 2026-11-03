@@ -24,6 +24,7 @@ export const WEBHOOK_EVENTS: Record<string, string> = {
   'medgas.test': 'medgas.test_recorded',
   'medgas.zone.certify': 'medgas.zone_certified',
   'binder.generate': 'binder.generated',
+  'import.bas_trend': 'bas.trend_imported',
 };
 export const EVENT_NAMES = [...new Set(Object.values(WEBHOOK_EVENTS))].sort();
 

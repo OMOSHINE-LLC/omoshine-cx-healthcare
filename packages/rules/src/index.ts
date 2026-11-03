@@ -6,3 +6,4 @@ export * from './library/ees.js';
 export * from './library/states.js';
 export * from './library/icra.js';
 export * from './library/medgas.js';
+export * from './library/trend.js';

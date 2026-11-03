@@ -11,5 +11,9 @@ export const config = {
   /** Allow http and private-network webhook targets. Development and tests only. */
   webhookAllowInsecure: process.env.WEBHOOK_ALLOW_INSECURE === '1',
   /** Deliver webhooks from the API process (disable when a separate worker runs the dispatcher). */
+  /** Base64 32-byte key encrypting connector tokens at rest. Required in production. */
+  secretsKey: process.env.OMOSHINE_SECRETS_KEY ?? '',
+  /** Allow connector base URLs other than the providers' public hosts (tests and sandboxes). */
+  connectorAllowAnyHost: process.env.CONNECTOR_ALLOW_ANY_HOST === '1',
   webhookDispatcher: process.env.WEBHOOK_DISPATCHER !== 'off',
 };

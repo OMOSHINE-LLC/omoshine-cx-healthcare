@@ -46,6 +46,16 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
   measurements, EES, ICRA, ILSM, medical gas and binders. Events are written to an outbox in the same transaction as
   the change and delivered by a dispatcher with exponential back-off; targets must be public https endpoints
   (`WEBHOOK_ALLOW_INSECURE=1` relaxes this for local development only).
+- **BAS trend import.** CSV of `timestamp, room_number, point, value`. Every reading is checked against the room's
+  requirements through the same engine as spot readings (overlays included), giving time in compliance, each
+  excursion and gaps in the trend per room; the median is recorded as a BAS measurement.
+- **COBie export.** Contact, Facility, Floor, Space, Zone (departments and medical gas zones), Type, Component (assets
+  and med gas outlets) and System sheets as CSV for CMMS loading. Cells starting with `= + - @` are escaped.
+- **Procore and Autodesk Construction Cloud.** One-way push of commissioning issues to Procore Observations or ACC
+  Issues, creating on first sync and updating only what changed. Access tokens are AES-256-GCM encrypted
+  (`OMOSHINE_SECRETS_KEY`) and never returned. Base URLs are limited to the providers' API hosts. The payloads follow
+  the providers' public REST documentation and **must be confirmed against a sandbox account** before go-live;
+  OAuth token refresh is not automated yet (paste a fresh token with `PATCH /connections/:id`).
 - The ICRA matrix, control list, ILSM measures, fire watch thresholds and medical gas limits are seeded as
   `verified: false` until the consultant review confirms them.
 
@@ -106,8 +116,7 @@ What the tests cover:
 
 ## Not yet in the MVP
 
-Offline mobile app, photo markup, PDF rendering of reports (HTML reports are print-ready), SSO wiring, the BAS / COBie /
-Procore / ACC connectors, the life safety module, phased activation and the Phase 3 operations modules. See the design
+Offline mobile app, photo markup, PDF rendering of reports (HTML reports are print-ready), SSO wiring, Procore / ACC OAuth token refresh, the life safety module, phased activation and the Phase 3 operations modules. See the design
 package for the roadmap.
 
 ---
