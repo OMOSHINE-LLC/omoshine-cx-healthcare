@@ -33,25 +33,28 @@ export type Permission =
   | 'ilsm.manage'
   | 'firewatch.log'
   | 'medgas.manage'
-  | 'medgas.test';
+  | 'medgas.test'
+  | 'ls.manage'
+  | 'ls.inspect'
+  | 'soc.manage';
 
 /**
  * Role → permission matrix. AHJ / Inspector is read-and-sign only.
  * Clinical reps and infection prevention can raise issues but not execute tests in the MVP.
  */
 export const PERMISSIONS: Record<Role, Permission[]> = {
-  owner: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.sign', 'issue.create', 'issue.update', 'ilsm.manage'],
-  cxa: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'measurement.record', 'ees.record', 'icra.manage', 'icra.log', 'ilsm.manage', 'firewatch.log', 'medgas.manage'],
-  gc: ['read', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'icra.manage', 'icra.log', 'firewatch.log', 'medgas.manage'],
-  trade: ['read', 'test.execute', 'test.sign', 'issue.update', 'icra.log', 'firewatch.log'],
+  owner: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.sign', 'issue.create', 'issue.update', 'ilsm.manage', 'soc.manage'],
+  cxa: ['read', 'project.manage', 'hierarchy.edit', 'template.edit', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'measurement.record', 'ees.record', 'icra.manage', 'icra.log', 'ilsm.manage', 'firewatch.log', 'medgas.manage', 'ls.manage', 'ls.inspect', 'soc.manage'],
+  gc: ['read', 'test.execute', 'test.sign', 'issue.create', 'issue.update', 'icra.manage', 'icra.log', 'firewatch.log', 'medgas.manage', 'ls.manage', 'ls.inspect'],
+  trade: ['read', 'test.execute', 'test.sign', 'issue.update', 'icra.log', 'firewatch.log', 'ls.inspect'],
   infection_prevention: ['read', 'issue.create', 'issue.update', 'test.sign', 'icra.manage', 'icra.log', 'icra.approve'],
-  safety_officer: ['read', 'issue.create', 'issue.update', 'test.sign', 'ilsm.manage', 'firewatch.log'],
+  safety_officer: ['read', 'issue.create', 'issue.update', 'test.sign', 'ilsm.manage', 'firewatch.log', 'ls.manage', 'ls.inspect', 'soc.manage'],
   clinical_rep: ['read', 'issue.create'],
   medgas_verifier: ['read', 'test.execute', 'test.sign', 'issue.create', 'medgas.manage', 'medgas.test'],
   tab: ['read', 'measurement.record', 'test.execute', 'test.sign', 'issue.update'],
   ahj: ['read', 'test.sign'],
   design_engineer: ['read', 'issue.create', 'issue.update'],
-  facilities_ops: ['read', 'issue.create', 'ees.record', 'test.execute', 'test.sign', 'firewatch.log'],
+  facilities_ops: ['read', 'issue.create', 'ees.record', 'test.execute', 'test.sign', 'firewatch.log', 'ls.manage', 'ls.inspect', 'soc.manage'],
 };
 
 /** Signature meanings each role may apply. */

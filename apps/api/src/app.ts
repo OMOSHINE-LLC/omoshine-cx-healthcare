@@ -20,6 +20,7 @@ import { medgasRoutes } from './routes/medgas.js';
 import { binderRoutes } from './routes/binder.js';
 import { API_KEY_PATTERN, integrationRoutes } from './routes/integrations.js';
 import { connectorRoutes } from './routes/connectors.js';
+import { lifeSafetyRoutes } from './routes/lifesafety.js';
 import { sha256 } from './crypto.js';
 import { timingSafeEqual } from 'node:crypto';
 
@@ -92,6 +93,7 @@ export async function buildApp(opts: { db: Db; logger?: boolean; fetchImpl?: typ
     await binderRoutes(api, opts.db);
     await integrationRoutes(api, opts.db);
     await connectorRoutes(api, opts.db, () => opts.fetchImpl ?? fetch);
+    await lifeSafetyRoutes(api, opts.db);
   }, { prefix: '/api/v1' });
 
   return app;

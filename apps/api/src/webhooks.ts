@@ -25,6 +25,9 @@ export const WEBHOOK_EVENTS: Record<string, string> = {
   'medgas.zone.certify': 'medgas.zone_certified',
   'binder.generate': 'binder.generated',
   'import.bas_trend': 'bas.trend_imported',
+  'ls.inspect': 'life_safety.inspection_recorded',
+  'pfi.create': 'soc.pfi_created',
+  'pfi.resolve': 'soc.pfi_resolved',
 };
 export const EVENT_NAMES = [...new Set(Object.values(WEBHOOK_EVENTS))].sort();
 
@@ -38,6 +41,8 @@ const PROJECT_OF: Record<string, string> = {
   medgas_zone: 'SELECT project_id FROM medgas_zone WHERE id = $1',
   room: `SELECT b.project_id FROM room rm JOIN department d ON d.id = rm.department_id JOIN floor f ON f.id = d.floor_id
           JOIN building b ON b.id = f.building_id WHERE rm.id = $1`,
+  ls_item: 'SELECT project_id FROM ls_item WHERE id = $1',
+  pfi_item: 'SELECT project_id FROM pfi_item WHERE id = $1',
   asset: 'SELECT s.project_id FROM asset a JOIN system s ON s.id = a.system_id WHERE a.id = $1',
 };
 

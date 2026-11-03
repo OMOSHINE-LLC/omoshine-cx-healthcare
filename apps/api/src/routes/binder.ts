@@ -5,6 +5,7 @@ import { appendAudit, verifyAuditChain } from '../audit.js';
 import type { Db, Tx } from '../db.js';
 import { isTenantAdmin, requirePermission, tenantTx } from '../http.js';
 import { approvalOf } from './icra.js';
+import { lifeSafetyItems, pfiItems } from './lifesafety.js';
 import { zoneState } from './medgas.js';
 import { reportShell } from './reports.js';
 
@@ -14,6 +15,7 @@ const ICRA_LOOKBACK_DAYS = 30;
 /**
  * Survey binder: one place that gathers the evidence a surveyor or AHJ asks for
  * (signed tests, room compliance, essential electrical, ICRA, ILSM, medical gas,
+ * life safety inspections and the Statement of Conditions,
  * open life safety items and record integrity), with a list of gaps to close
  * before the survey. It reads existing records only; nothing here changes them.
  */
@@ -165,6 +167,37 @@ export async function buildBinder(tx: Tx, projectId: string, tenantId: string, i
     });
   }
 
+  // 6b. Life safety: dampers, doors, fire alarm devices, Statement of Conditions -------
+  {
+    const items = await lifeSafetyItems(tx, projectId);
+    const pfi = await pfiItems(tx, projectId);
+    const gaps: Gap[] = [];
+    const tags = (list: { tag: string }[]) => list.slice(0, 10).map((i) => i.tag).join(', ') + (list.length > 10 ? `, and ${list.length - 10} more` : '');
+    const GROUPS = [['damper', 'Fire and smoke dampers'], ['door', 'Fire and smoke doors'], ['fire_alarm', 'Fire alarm devices']] as const;
+    const records: Record<string, unknown>[] = [];
+    for (const [g, title] of GROUPS) {
+      const list = items.filter((i) => i.group === g);
+      if (!list.length) continue;
+      const failed = list.filter((i) => i.dueStatus === 'failed');
+      const overdue = list.filter((i) => i.dueStatus === 'overdue');
+      if (failed.length) gaps.push({ severity: 'life_safety', text: `${title}: ${plural(failed.length, 'item')} failed inspection (${tags(failed)})` });
+      if (overdue.length) gaps.push({ severity: 'life_safety', text: `${title}: ${plural(overdue.length, 'item')} overdue for inspection (${tags(overdue)})` });
+      const count = (s: string) => list.filter((i) => i.dueStatus === s).length;
+      records.push({ group: title, total: list.length, current: count('current'), dueSoon: count('due_soon'), overdue: overdue.length, failed: failed.length, neverInspected: count('never_inspected') });
+    }
+    const pfiOpen = pfi.filter((x) => x.status === 'open');
+    for (const x of pfi.filter((x) => x.pfiStatus === 'overdue')) {
+      gaps.push({ severity: 'regulatory', text: `Plan-for-improvement item ${x.number} (${x.deficiency}) is past its planned completion of ${x.planned_completion}` });
+    }
+    sections.push({
+      key: 'lifesafety', title: 'Life safety inspections and Statement of Conditions', status: sectionStatus([...items, ...pfi], gaps), gaps,
+      summary: items.length || pfi.length
+        ? `${plural(items.length, 'item')}, ${items.filter((i) => i.dueStatus === 'current' || i.dueStatus === 'due_soon').length} current; ${plural(pfiOpen.length, 'open PFI item')}`
+        : 'No items',
+      records,
+    });
+  }
+
   // 7. Open issues ------------------------------------------------------------------
   const issues = (await tx.query<{ number: number; title: string; priority: string; life_safety: boolean; status: string; created_at: Date; org: string | null }>(
     `SELECT i.number, i.title, i.priority, i.life_safety, i.status, i.created_at, o.name AS org
@@ -236,6 +269,7 @@ const RECORD_TABLES: Record<string, (rs: Rec[]) => string> = {
   icra: (rs) => table(['Zone', 'Class', 'State', 'IP approval', 'Days logged / missing (30 d)', 'Failed logs'], rs.map((r) => [esc(r.name), esc(r.icraClass), r.active ? 'Active' : 'Closed', `${chip(String(r.approval))}${r.approvedBy ? ` ${esc(r.approvedBy)}` : ''}`, `${esc(r.daysLogged)} / ${esc(r.daysMissing)}`, esc(r.failedLogs)])),
   ilsm: (rs) => table(['Deficiency', 'Location', 'Status', 'Measures documented', 'Patrols', 'Fire watch gaps', 'Identified'], rs.map((r) => [`<span class="ls">⚑</span> ${esc(r.deficiency)}`, esc(r.location), chip(String(r.status)), esc(r.measuresDocumented), esc(r.patrols), esc(r.fireWatchGaps), fmt(r.identifiedAt)])),
   medgas: (rs) => table(['Zone', 'Valve', 'Gases', 'Outlets', 'Tests passed', 'Certification'], rs.map((r) => [esc(r.name), esc(r.valveTag), esc(r.gases), esc(r.outlets), `${esc(r.passed)}/${esc(r.required)}`, `${chip(String(r.certification))}${r.certifiedBy ? ` ${esc(r.certifiedBy)}, ${fmt(r.certifiedAt)}` : ''}`])),
+  lifesafety: (rs) => table(['Category', 'Items', 'Current', 'Due soon', 'Overdue', 'Failed', 'Never inspected'], rs.map((r) => [esc(r.group), esc(r.total), esc(r.current), esc(r.dueSoon), esc(r.overdue), Number(r.failed) ? `<span class="ls">⚑</span> ${esc(r.failed)}` : '0', esc(r.neverInspected)])),
   issues: (rs) => table(['#', 'Issue', 'Priority', 'Status', 'Ball in court', 'Opened'], rs.map((r) => [esc(r.number), `${r.lifeSafety ? '<span class="ls">⚑ Life safety</span> ' : ''}${esc(r.title)}`, esc(r.priority), chip(String(r.status)), esc(r.ballInCourt ?? '—'), fmt(r.opened)])),
   integrity: () => '',
 };
