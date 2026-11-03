@@ -4,3 +4,4 @@ export * from './library/standards.js';
 export * from './library/ashrae170.js';
 export * from './library/ees.js';
 export * from './library/states.js';
+export * from './library/icra.js';

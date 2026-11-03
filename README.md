@@ -18,7 +18,21 @@ of e-signatures, a tamper-evident audit trail and tenant isolation.
 | --- | --- |
 | `packages/rules` | Code-requirement library (ASHRAE 170, NFPA 99/110, USP 797/800), state profiles (CA, NY, FL, TX), overlay engine and pure compliance evaluators. |
 | `apps/api` | Fastify + PostgreSQL REST API (`/api/v1`). Row-level security per tenant, role and scope based access, e-signatures with step-up re-authentication, hash-chained audit log, TAB CSV import, branded HTML reports. |
-| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log. |
+| `apps/web` | React web app in the OMOSHINE palette: readiness dashboard, room compliance grid and room data sheet, EES dashboard, checklists and tests with signing, issues log, ICRA daily log and ILSM / fire watch screens. |
+
+### Phase 2: infection control and interim life safety
+
+- **ICRA zones.** The class (I to IV) comes from the construction type and patient risk group matrix. A manual
+  override can raise the class but never lower it. Infection Prevention signs the permit with PIN re-authentication,
+  and any change to the zone requires a new sign-off.
+- **Daily ICRA log.** Yes/no controls for the zone's class plus a pressure reading for Class III and IV. Logs are
+  append-only. A failed inspection opens a high-priority issue automatically. Each zone shows a 30-day history.
+- **ILSM assessments.** Required measures come from the deficiency type. A fire watch is added when an alarm or
+  sprinkler system is out of service for more than 4 hours. An assessment cannot be resolved until every measure is
+  documented, and it is locked once resolved.
+- **Fire watch.** One-tap patrol entries, append-only, with alerts for gaps longer than the patrol interval.
+- The ICRA matrix, control list, ILSM measures and fire watch thresholds are seeded as `verified: false` until the
+  consultant review confirms them.
 
 ## Running locally
 
@@ -78,7 +92,7 @@ What the tests cover:
 ## Not yet in the MVP
 
 Offline mobile app, photo markup, PDF rendering of reports (HTML reports are print-ready), SSO wiring,
-webhooks and the Phase 2 and 3 modules (ICRA/ILSM, medical gas, survey binder, integrations, operations
+webhooks and the remaining Phase 2 and 3 modules (medical gas, survey binder, integrations, operations
 handoff). See the design package for the roadmap.
 
 ---

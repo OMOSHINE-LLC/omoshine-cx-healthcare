@@ -63,7 +63,7 @@ export async function createWorld(): Promise<World> {
   const project = expectStatus(await as.admin.post('/projects', {
     name: 'West Tower Surgical Expansion', facilityName: 'Riverside Medical Center', stateCode: 'CA', creatorRole: 'owner',
   }), 201).id as string;
-  for (const [key, role] of [['cxa', 'cxa'], ['gc', 'gc'], ['tab', 'tab'], ['ahj', 'ahj'], ['clinical', 'clinical_rep']] as const) {
+  for (const [key, role] of [['cxa', 'cxa'], ['gc', 'gc'], ['tab', 'tab'], ['ahj', 'ahj'], ['clinical', 'clinical_rep'], ['ip', 'infection_prevention'], ['safety', 'safety_officer']] as const) {
     expectStatus(await as.admin.post(`/projects/${project}/role-assignments`, { userId: tenant.users[key].id, role }), 201);
   }
   const c = as.cxa;
